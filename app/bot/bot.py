@@ -1,0 +1,52 @@
+import logging
+
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
+
+from app.bot.handlers import routers
+from app.bot.middlewares import DbMiddleware
+from app.config.config import Config
+from app.infrastructure.database import Database, CREATE_USERS_TABLE
+
+logger = logging.getLogger(__name__)
+
+
+async def main(config: Config) -> None:
+    '''
+    Концигурирование и запуск бота
+    '''
+    logger.info('Starting bot...')
+
+    session = AiohttpSession(
+        proxy=config.proxy.proxy_url
+    )
+    bot = Bot(
+        token=config.tg_bot.bot_token,
+        session=session,
+        default=DefaultBotProperties()
+    )
+    dp = Dispatcher()
+
+    logger.info('Database connection...')
+    db = Database(config.db.path)
+    await db.connect()
+    await db.conn.execute(CREATE_USERS_TABLE)
+    await db.conn.commit()
+
+    logger.info('Include routers...')
+    dp.include_routers(*routers)
+
+    logger.info('Including middlewares...')
+    dp.update.middleware(DbMiddleware(db))
+
+    logger.info('Start polling...')
+    await bot.delete_webhook(drop_pending_updates=True)
+    
+    try:
+        await dp.start_polling(bot)
+    except Exception as e:
+        logger.exception(e)
+    finally:
+        await bot.session.close()
+        await db.close()
