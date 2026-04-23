@@ -54,7 +54,7 @@ def load_config(path: str | None = None) -> Config:
         port=env('PROXY_PORT')
     )
     db = DatabaseSettings(
-        path=env('DB_PATH', default='climbing.db')
+        path=env('DB_PATH')
     )
 
     logger.info('Configuration loaded successfully.')

@@ -1,3 +1,4 @@
+import aiosqlite
 import logging
 
 from aiogram import Bot, Dispatcher
@@ -29,16 +30,16 @@ async def main(config: Config) -> None:
     dp = Dispatcher()
 
     logger.info('Database connection...')
-    db = Database(config.db.path)
-    await db.connect()
-    await db.conn.execute(CREATE_USERS_TABLE)
-    await db.conn.commit()
+    db = await aiosqlite.connect(config.db.path)
+    db.row_factory = aiosqlite.Row
+    my_db = Database(db)
+    await my_db.conn.execute(CREATE_USERS_TABLE)
 
     logger.info('Include routers...')
     dp.include_routers(*routers)
 
     logger.info('Including middlewares...')
-    dp.update.middleware(DbMiddleware(db))
+    dp.update.middleware(DbMiddleware(my_db))
 
     logger.info('Start polling...')
     await bot.delete_webhook(drop_pending_updates=True)
