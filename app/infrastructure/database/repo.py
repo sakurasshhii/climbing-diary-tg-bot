@@ -1,5 +1,5 @@
 from app.infrastructure.database.database import Database, Transaction
-from app.infrastructure.database.models import (
+from app.infrastructure.database.sql_models import (
     INSERT_USER,
     GET_USER_BY_ID,
 )

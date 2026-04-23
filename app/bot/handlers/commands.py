@@ -5,7 +5,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
 from app.lexic.ru import MAIN_MENU_MSG
-from app.infrastructure.database.queries import UserRepository
+from app.infrastructure.database.repo import UserRepository
 
 logger = logging.getLogger(__name__)
 commands_router = Router()

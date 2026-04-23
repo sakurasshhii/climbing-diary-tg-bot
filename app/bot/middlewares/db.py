@@ -1,7 +1,7 @@
 from aiogram import BaseMiddleware
 from typing import Callable, Dict, Any, Awaitable
 
-from app.infrastructure.database.queries import UserRepository
+from app.infrastructure.database.repo import UserRepository
 from app.infrastructure.database import Database
 
 
