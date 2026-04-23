@@ -14,13 +14,15 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-try:
-    asyncio.run(main(config))
-except ProxyError as e:
-    port = int(config.proxy.port)
-    if port < 10999:
-        logger.debug('ProxyError catched. Trying another port...')
-        config.proxy.port = str(port + 1)
+
+if __name__ == '__main__':
+    try:
         asyncio.run(main(config))
-    else:
-        raise e
+    except ProxyError as e:
+        port = int(config.proxy.port)
+        if port < 10999:
+            logger.debug('ProxyError catched. Trying another port...')
+            config.proxy.port = str(port + 1)
+            asyncio.run(main(config))
+        else:
+            raise e

@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 
 from app.bot.handlers import routers
-from app.bot.middlewares import DbMiddleware
+from app.bot.middlewares import DBUserMiddleware
 from app.config.config import Config
 from app.infrastructure.database import Database, CREATE_USERS_TABLE
 from app.bot.keyboards.set_menu import set_main_menu
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 async def main(config: Config) -> None:
     '''
-    Концигурирование и запуск бота
+    Запуск бота
     '''
     logger.info('Starting bot...')
 
@@ -42,7 +42,7 @@ async def main(config: Config) -> None:
     dp.include_routers(*routers)
 
     logger.info('Including middlewares...')
-    dp.update.middleware(DbMiddleware(my_db))
+    dp.update.middleware(DBUserMiddleware(my_db))
 
     logger.info('Start polling...')
     await bot.delete_webhook(drop_pending_updates=True)

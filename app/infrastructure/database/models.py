@@ -1,9 +1,6 @@
-INIT_USERS_TABLE = """
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER UNIQUE
-)
-"""
+'''
+Набор SQL-команд для общения с БД
+'''
 
 CREATE_USERS_TABLE = """
 CREATE TABLE IF NOT EXISTS users (
@@ -19,7 +16,7 @@ VALUES (?, ?);
 """
 
 GET_USER_BY_ID = """
-SELECT id, user_id, username
+SELECT *
 FROM users
 WHERE user_id = ?;
 """

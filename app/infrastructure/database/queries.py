@@ -6,21 +6,24 @@ from app.infrastructure.database.models import (
 
 
 class UserRepository:
+    '''
+    Интерфейс для работы с таблицей users
+    '''
     def __init__(self, db: Database):
         self.db = db
 
     async def add_user(self, user_id: int, username: str | None):
         await self.db.execute(
             INSERT_USER,
-            (user_id, username),
+            (user_id, username)
         )
 
     async def get_user(self, user_id: int):
-        row = await self.db.fetchone(
+        user = await self.db.fetchone(
             GET_USER_BY_ID,
-            (user_id,),
+            (user_id,)
         )
-        return dict(row) if row else None
+        return dict(user) if user else None
     
     '''
     Пример использования Transaction

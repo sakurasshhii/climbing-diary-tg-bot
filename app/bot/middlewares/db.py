@@ -5,7 +5,10 @@ from app.infrastructure.database.queries import UserRepository
 from app.infrastructure.database import Database
 
 
-class DbMiddleware(BaseMiddleware):
+class DBUserMiddleware(BaseMiddleware):
+    '''
+    Проброс работы с user_repo в хэндлер.
+    '''
     def __init__(self, db: Database):
         self.db = db
 
