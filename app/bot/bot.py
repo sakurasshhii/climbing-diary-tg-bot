@@ -9,6 +9,7 @@ from app.bot.handlers import routers
 from app.bot.middlewares import DbMiddleware
 from app.config.config import Config
 from app.infrastructure.database import Database, CREATE_USERS_TABLE
+from app.bot.keyboards.set_menu import set_main_menu
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,8 @@ async def main(config: Config) -> None:
         default=DefaultBotProperties()
     )
     dp = Dispatcher()
+
+    await set_main_menu(bot)
 
     logger.info('Database connection...')
     db = await aiosqlite.connect(config.db.path)
