@@ -1,6 +1,6 @@
 import asyncio
 import logging
-
+from aiohttp_socks._errors import ProxyError
 from app.bot import main
 from app.config.config import Config, load_config
 
@@ -12,4 +12,15 @@ logging.basicConfig(
     format=config.log.format
 )
 
-asyncio.run(main(config))
+logger = logging.getLogger(__name__)
+
+try:
+    asyncio.run(main(config))
+except ProxyError as e:
+    port = int(config.proxy.port)
+    if port < 10999:
+        logger.debug('ProxyError catched. Trying another port...')
+        config.proxy.port = str(port + 1)
+        asyncio.run(main(config))
+    else:
+        raise e

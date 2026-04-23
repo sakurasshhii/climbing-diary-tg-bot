@@ -2,11 +2,12 @@ from aiogram import BaseMiddleware
 from typing import Callable, Dict, Any, Awaitable
 
 from app.infrastructure.database.queries import UserRepository
+from app.infrastructure.database import Database
 
 
 class DbMiddleware(BaseMiddleware):
-    def __init__(self, db):
-        self.users_repo = UserRepository(db)
+    def __init__(self, db: Database):
+        self.db = db
 
     async def __call__(
         self,
@@ -14,5 +15,6 @@ class DbMiddleware(BaseMiddleware):
         event,
         data: Dict[str, Any]
     ) -> Awaitable[Any]:
-        data["users"] = self.users_repo
+        user_repo: UserRepository = UserRepository(self.db)
+        data["user_repo"] = user_repo
         return await handler(event, data)

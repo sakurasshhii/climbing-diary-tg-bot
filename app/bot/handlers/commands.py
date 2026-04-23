@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
@@ -5,6 +7,7 @@ from aiogram.types import Message
 from app.lexic.ru import MAIN_MENU_MSG
 from app.infrastructure.database.queries import UserRepository
 
+logger = logging.getLogger(__name__)
 commands_router = Router()
 
 
@@ -12,10 +15,10 @@ commands_router = Router()
 @commands_router.message(CommandStart())
 async def process_start_command(
     message: Message,
-    users: UserRepository
+    user_repo: UserRepository
 ) -> None:
     if message.from_user:
-        await users.add_user(
+        await user_repo.add_user(
             message.from_user.id,
             message.from_user.username
         )
@@ -25,9 +28,9 @@ async def process_start_command(
 @commands_router.message(Command(commands=['help']))
 async def process_help_command(
     message: Message,
-    users: UserRepository
+    user_repo: UserRepository
 ) -> None:
     if message.from_user:
-        user_info = await users.get_user(message.from_user.id)
-        print(f'Тут информация из БД:\n{user_info}')
+        user_info = await user_repo.get_user(message.from_user.id)
+        logger.info(f'Получена информация из БД:\n{user_info}')
     await message.answer(MAIN_MENU_MSG['/help'])
