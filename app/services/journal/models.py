@@ -39,6 +39,7 @@ Exercise всегда существует в Set в одном экземпля
 import re
 import datetime as dt
 
+from dataclasses import dataclass
 from .exceptions import InvalidInputError
 from .enums import TrainingType
 
@@ -110,24 +111,33 @@ class GymTrain(Train, train_type='Gym'):
     pass
 
 
+@dataclass(frozen=True)
 class Set:
     '''
     Container used to group activity in one training set.
     '''
-    def __init__(self, content: list[Route | Exercise], comments: str | None = None) -> None:
-        self._content = list(content)
-        self.comments = comments
+    content: list[Route | Exercise]
+    comments: str | None = None
+
+    def __post_init__(self) -> None:
+        if not len(self.content):
+            raise ValueError('Empty set is not avaiable.')
     
     def __str__(self) -> str:
-        return ' | '.join((x.__str__() for x in self._content)) + \
+        return ' | '.join((x.__str__() for x in self.content)) + \
             f'{'; comments: ' + self.comments if self.comments else ''}'
 
 
+@dataclass(frozen=True)
 class Route:
     '''
     Route rate via French/Fontainebleau system.
     '''
-    def __init__(self, route: str) -> None:
+    grade: str
+    falls: int = 0
+    flash: bool = False
+
+    def __post_init__(self) -> None:
         '''
         Route format: {grade}{:falls}{f if flash}
 
@@ -135,42 +145,62 @@ class Route:
         falls — count of falls in route before top
         flash — if route was climbed first time and without falls
         '''
-        match = re.fullmatch(r'(\d[abc]\+?)(:?)(f?)', route)
+        if not re.fullmatch(r'\d[abc]\+?', self.grade):
+            raise ValueError(f'Invalid grade: {self.grade}')
+        if not isinstance(self.falls, int) or self.falls < 0:
+            raise ValueError(f'Invalid falls count: {self.falls}')
+        if not isinstance(self.flash, bool) or self.flash and self.falls:
+            raise ValueError(f'Invalid flash flag: {self.flash}')
+
+    @classmethod
+    def from_str(cls, string: str) -> Route:
+        match = re.fullmatch(r'(\d[abc]\+?)(:?)(f?)', string)
         if match is None:
-            raise InvalidInputError(route) from ValueError
+            raise ValueError(f'Invalid input: {string}')
         
-        rate, is_climbed, is_flash = match.groups()
-        self._route = {
-        }
-        self.rate = rate
-        self.falls = int(is_climbed == ':')
-        if self.falls > 0:
-            self.flash = False
+        grade, is_climbed, is_flash = match.groups()
+        falls = int(is_climbed == ':')
+        if falls > 0:
+            flash = False
         else:
-            self.flash = is_flash == 'f'
+            flash = is_flash == 'f'
+
+        return cls(grade, falls, flash)
     
     def __str__(self) -> str:
-        return f'{self.rate}{'(fall)' if self.falls else ''}{'(flash)' if self.flash else ''}'
-        
+        return f'{self.grade}{'(fall)' if self.falls else ''}{'(flash)' if self.flash else ''}'
 
+
+@dataclass(frozen=True)
 class Exercise:
     '''
     Exercise in set of GPP/SFP training
     '''
-    def __init__(self, exercise: str) -> None:
+    name: str
+    repeats: tuple[int, ...]
+    def __post_init__(self) -> None:
         '''
         Exercise format: {name};{repeats}
 
         name — name of the exercise
         repeats — looks like 1-2-3 where number means repetitions in one set
         '''
-        match = re.fullmatch(r'(\D+);(\d+[\d-]*)', exercise)
+        if not self.name:
+            raise ValueError('Invalid input: empty name')
+        if not len(self.repeats) or any(x <= 0 for x in self.repeats):
+            raise ValueError(f'Invalid repeats: {self.repeats}')
+    
+    @classmethod
+    def from_str(cls, string: str) -> Exercise:
+        match = re.fullmatch(r'(\D+);(\d+[\d-]*)', string)
         if match is None:
-            raise InvalidInputError(exercise) from ValueError
-        
+            raise ValueError(f'Invalid input: {string}')
         name, rep = match.groups()
-        self.name = name.strip()
-        self.repeats =  tuple(map(int, rep.split('-')))
+
+        return Exercise(
+            name.strip(),
+            tuple(map(int, rep.split('-')))
+            )
 
     def __str__(self) -> str:
-        return f'{self.name}: {"|".join(map(str, self.repeats))}'
+        return f'{self.name};{"|".join(map(str, self.repeats))}'

@@ -2,7 +2,7 @@ from enum import Enum, auto
 
 
 class TrainingType(Enum):
-    LEAD = auto()
-    BOULDER = auto()
-    GPP = auto()
-    SFP = auto()
+    LEAD = 'Lead'
+    BOULDER = 'Boulder'
+    GPP = 'GPP'
+    SFP = 'SFP'
