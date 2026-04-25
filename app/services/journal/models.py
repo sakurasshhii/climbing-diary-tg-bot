@@ -39,44 +39,16 @@ Exercise всегда существует в Set в одном экземпля
 import re
 import datetime as dt
 
-from app.services.training.enums import TrainingType
 from .exceptions import InvalidInputError
 from .enums import TrainingType
-
-
-class WorkoutDate:
-    '''
-    Check if chosen date correct.
-    '''
-    def __set_name__(self, owner, name):
-        self.private_name = f'_{name}'
-    
-    def __get__(self, instance, owner) -> dt.date:
-        if instance is None:
-            raise AttributeError('Allowed only for instance of cls')
-        return instance.__dict__.get(self.private_name, None)
-    
-    def __set__(self, instance, val):
-        if instance is None:
-            return None
-        if isinstance(val, dt.date):
-            instance.__dict__[self.private_name] = val
-        else:
-            raise ValueError(f'Недопустимое значение поля {self.__class__.__name__}: {val}')
-    	
-    def __delete__(self, instance):
-        raise ValueError('Не предусмотрено удаление даты')
 
 
 class Journal:
     '''
     Great class contains multiple workout sessions.
     '''
-    period_st = WorkoutDate()
-    period_en = WorkoutDate()
-
     def __init__(self, content: list[Workout], comments: str | None = None) -> None:
-        self._content = content
+        self._content = sorted(content, key=lambda x: x.date)
         self.comments = comments
         if len(content) > 0:
             self.period_st, self.period_en = [self._content[0].date, self._content[-1].date]
@@ -86,7 +58,7 @@ class Journal:
         return (self.period_st, self.period_en)
     
     def __str__(self) -> str:
-        date = f'[{'-'.join(map(str, self.period))}]\n'
+        date = f'[{"-".join(map(str, self.period))}]\n'
         about = f'About this journal: {self.comments}\n' if self.comments else ''
         return date + about + '\n ——— \n'.join(x.__str__() for x in self._content)
 
@@ -96,20 +68,19 @@ class Workout:
     One workout session a day.
     It could contain several training types inside.
     '''
-    date = WorkoutDate()
-
     def __init__(self, date: dt.date, content: list[Train], comments: str | None = None) -> None:
         self.date = date
-        self._content = content
+        self._content = list(content)
         self.comments = comments
     
     def __len__(self):
         return len(self._content)
     
     def __str__(self) -> str:
-        date = f'Date: {self.date.isoformat()}'
-        content = '\n'.join(x.__str__() for x in self._content)
-        return date + '\n' + content
+        return '\n'.join([
+            f'Date: {self.date.isoformat()}',
+            *(x.__str__() for x in self._content)
+        ])
 
         
 class Train:
@@ -123,11 +94,11 @@ class Train:
     
     def __init__(self, type: TrainingType, sets: list[Set], comments: str | None = None) -> None:
         self._type = type
-        self._sets = sets
+        self._sets = list(sets)
         self.comments = comments
     
     def __str__(self) -> str:
-        return f'{self._type.name.capitalize()}:\n{'\n'.join(x.__str__() for x in self._sets)}' \
+        return f'{self._type.name.capitalize()}:\n{"\n".join(x.__str__() for x in self._sets)}' \
             f'{'\nComments: ' + self.comments if self.comments else ''}'
 
 
@@ -144,11 +115,12 @@ class Set:
     Container used to group activity in one training set.
     '''
     def __init__(self, content: list[Route | Exercise], comments: str | None = None) -> None:
-        self._content = content
+        self._content = list(content)
         self.comments = comments
     
     def __str__(self) -> str:
-        return ' | '.join((x.__str__() for x in self._content))
+        return ' | '.join((x.__str__() for x in self._content)) + \
+            f'{'; comments: ' + self.comments if self.comments else ''}'
 
 
 class Route:
@@ -171,9 +143,11 @@ class Route:
         self._route = {
         }
         self.rate = rate
-        self.falls = is_climbed == ':'
-        self.flash = is_flash == 'f'
-        # Добавить проверку: if self.falls -> self.flash = False
+        self.falls = int(is_climbed == ':')
+        if self.falls > 0:
+            self.flash = False
+        else:
+            self.flash = is_flash == 'f'
     
     def __str__(self) -> str:
         return f'{self.rate}{'(fall)' if self.falls else ''}{'(flash)' if self.flash else ''}'
@@ -190,13 +164,13 @@ class Exercise:
         name — name of the exercise
         repeats — looks like 1-2-3 where number means repetitions in one set
         '''
-        match = re.fullmatch(r'(\D*);([\d-]*)', exercise)
+        match = re.fullmatch(r'(\D+);(\d+[\d-]*)', exercise)
         if match is None:
             raise InvalidInputError(exercise) from ValueError
         
         name, rep = match.groups()
-        self.name = name.strip(),
+        self.name = name.strip()
         self.repeats =  tuple(map(int, rep.split('-')))
 
     def __str__(self) -> str:
-        return f'{self.name}: {'|'.join(map(str, self.repeats))}'
+        return f'{self.name}: {"|".join(map(str, self.repeats))}'
