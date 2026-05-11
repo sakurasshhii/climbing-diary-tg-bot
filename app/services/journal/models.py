@@ -203,7 +203,6 @@ class Row:
                 return Row(**s)
             case TrainingType.LEAD | TrainingType.BOULDER:
                 s = cls.stack_routes(raw)
-                print(s)
                 return Row(**s)
 
     @staticmethod
@@ -277,7 +276,8 @@ class Route:
 
     @classmethod
     def from_str(cls, string: str) -> Route:
-        match = re.fullmatch(r'(\d[abc]\+?)(:?)(f?)', string)
+        # ! add RU alpha and check re [abc]
+        match = re.fullmatch(r'(\d[\w]\+?)(:?)(f?)', string.strip())
         if match is None:
             raise ValueError(f'Invalid input: {string}')
 
