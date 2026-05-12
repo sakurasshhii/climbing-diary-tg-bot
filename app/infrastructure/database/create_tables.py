@@ -16,11 +16,10 @@ UI (journal/Workout creation)
 4. input training information (formatted txt where sets separated to new lines)
 5. input comment
 '''
-from .database import Database
-from .sql_models import (
-    CREATE_USERS_TABLE
-)
+from .database import Database, Transaction
+from .sql_models import CREATE_TABLES
 
 
 async def create_tables(db: Database) -> None:
-    await db.conn.execute(CREATE_USERS_TABLE)
+    await db.conn.executescript(CREATE_TABLES)
+    await db.conn.commit()

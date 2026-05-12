@@ -14,11 +14,11 @@ Workout(
     content: list[Train] = [
         ClimbTrain(
             type: lead | boulder,
-            sets: [Set([Route(rate[str], falls[int], flash[int]), ...], *comments), ...],
+            sets: [Row([Route(rate[str], falls[int], flash[int]), ...], *comments), ...],
         ),
         GymTrain(
             type: GPP | SFP,
-            sets: [Set([Exercise(name[str], repeats), ...], *comments), ...],
+            sets: [Row([Exercise(name[str], repeats), ...], *comments), ...],
         )
     ],
     *comments: str | None = None
