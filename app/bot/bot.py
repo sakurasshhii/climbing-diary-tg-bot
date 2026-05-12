@@ -8,7 +8,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from app.bot.handlers import routers
 from app.bot.middlewares import DBUserMiddleware
 from app.config.config import Config
-from app.infrastructure.database import Database, CREATE_USERS_TABLE
+from app.infrastructure.database import Database, create_tables
 from app.bot.keyboards.set_menu import set_main_menu
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ async def main(config: Config) -> None:
     db = await aiosqlite.connect(config.db.path)
     db.row_factory = aiosqlite.Row
     my_db = Database(db)
-    await my_db.conn.execute(CREATE_USERS_TABLE)
+    await create_tables(db=my_db)
 
     logger.info('Include routers...')
     dp.include_routers(*routers)
