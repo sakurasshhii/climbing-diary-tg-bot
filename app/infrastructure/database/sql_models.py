@@ -35,8 +35,8 @@ CREATE TABLE workouts (
 CREATE TABLE trains (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     workout_id INTEGER NOT NULL,
-    train_category TEXT NOT NULL,   -- climb/gym
-    train_type TEXT NOT NULL,       -- Lead/Boulder/GPP/SFP
+    category TEXT NOT NULL,   -- climb/gym
+    type TEXT NOT NULL,       -- Lead/Boulder/GPP/SFP
     comments TEXT,
     
     FOREIGN KEY (workout_id)
