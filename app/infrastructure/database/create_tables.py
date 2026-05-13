@@ -14,20 +14,12 @@ Journal -> Workout -> Train -> Row -> Route / Exercise
                 > rows(id, train_id, row_order, comments)
                     > routes(id, row_id, route_order, grade, falls, flash)
                     > exercises(id, row_id, name, repeats)
-
--- UI --
-(journal / Workout creation)
-1. bttn - where (Journal)
-2. bttn - when (date)
-3. bttn - training type (TrainingType -> Train)
-4. input training information (formatted text where sets separated by new lines)
-5. input comment
 '''
 from .database import Database, Transaction
-from .sql_models import CREATE_TABLES
+from .sql_models import SCRIPT_CREATE_TABLES
 
 
 async def create_tables(db: Database) -> None:
     await db.conn.execute('PRAGMA foreign_keys = ON')
-    await db.conn.executescript(CREATE_TABLES)
+    await db.conn.executescript(SCRIPT_CREATE_TABLES)
     await db.conn.commit()

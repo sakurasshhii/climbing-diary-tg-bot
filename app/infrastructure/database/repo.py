@@ -2,7 +2,7 @@ import aiosqlite
 from .database import Database, Transaction
 from .sql_models import (
     INSERT_USER, INSERT_JOURNAL,
-    GET_USER_BY_TG_ID, GET_JOURNAL_BY_ID, GET_USER_ID,
+    GET_USER_BY_TG_ID, GET_JOURNAL, GET_USER_ID,
 )
 
 '''
@@ -59,10 +59,10 @@ class UserRepository:
             (user_id, comments)
         )
 
-    async def get_journal(self, tg_id: int, journal_no: int = False):
+    async def get_journals(self, tg_id: int, journal_no: int = False):
         user_id = await self._get_user_id(tg_id)
         journal = await self.db.fetchall(
-            GET_JOURNAL_BY_ID,
+            GET_JOURNAL,
             (user_id, )
         )
         return journal

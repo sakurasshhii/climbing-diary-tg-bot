@@ -4,7 +4,7 @@
 
 ################## table creation ###################
 
-CREATE_TABLES = """
+SCRIPT_CREATE_TABLES = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     tg_id INTEGER NOT NULL UNIQUE,
@@ -112,8 +112,8 @@ WHERE tg_id = ?;
 
 GET_USER_ID = "SELECT id FROM users WHERE tg_id = ?"
 
-GET_JOURNAL_BY_ID = """
+GET_JOURNAL = """
 SELECT *
 FROM journals
-WHERE user_id = ?;
+WHERE id = ?;
 """

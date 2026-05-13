@@ -4,6 +4,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.bot.handlers import routers
 from app.bot.middlewares import DBUserMiddleware
@@ -28,7 +29,8 @@ async def main(config: Config) -> None:
         session=session,
         default=DefaultBotProperties()
     )
-    dp = Dispatcher()
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
 
     await set_main_menu(bot)
 
