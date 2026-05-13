@@ -7,11 +7,12 @@
 CREATE_TABLES = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL UNIQUE,
-    username TEXT
+    tg_id INTEGER NOT NULL UNIQUE,
+    username TEXT,
+    last_journal INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE journals (
+CREATE TABLE IF NOT EXISTS journals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     comments TEXT,
@@ -21,7 +22,15 @@ CREATE TABLE journals (
         ON DELETE CASCADE
 );
 
-CREATE TABLE workouts (
+CREATE TRIGGER IF NOT EXISTS update_last_journal
+AFTER INSERT ON journals
+BEGIN
+    UPDATE users
+    SET last_journal = NEW.id
+    WHERE id = NEW.user_id;
+END;
+
+CREATE TABLE IF NOT EXISTS workouts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     journal_id INTEGER NOT NULL,
     workout_date DATE NOT NULL,
@@ -32,7 +41,7 @@ CREATE TABLE workouts (
         ON DELETE CASCADE
 );
 
-CREATE TABLE trains (
+CREATE TABLE IF NOT EXISTS trains (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     workout_id INTEGER NOT NULL,
     category TEXT NOT NULL,   -- climb/gym
@@ -44,7 +53,7 @@ CREATE TABLE trains (
         ON DELETE CASCADE
 );
 
-CREATE TABLE rows (
+CREATE TABLE IF NOT EXISTS rows (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     train_id INTEGER NOT NULL,
     row_order INTEGER NOT NULL,
@@ -55,7 +64,7 @@ CREATE TABLE rows (
         ON DELETE CASCADE
 );
 
-CREATE TABLE routes (
+CREATE TABLE IF NOT EXISTS routes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     row_id INTEGER NOT NULL,
     route_order INTEGER NOT NULL,
@@ -68,7 +77,7 @@ CREATE TABLE routes (
         ON DELETE CASCADE
 );
 
-CREATE TABLE exercises (
+CREATE TABLE IF NOT EXISTS exercises (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     row_id INTEGER NOT NULL,
     name TEXT NOT NULL,
@@ -80,15 +89,31 @@ CREATE TABLE exercises (
 );
 """
 
-################ user repo operatios ################
+################ user repo operations ################
+################ add data ###########################
 
 INSERT_USER = """
-INSERT OR IGNORE INTO users (user_id, username)
+INSERT OR IGNORE INTO users (tg_id, username)
 VALUES (?, ?);
 """
 
-GET_USER_BY_ID = """
+INSERT_JOURNAL = """
+INSERT INTO journals (user_id, comments)
+VALUES (?, ?);
+"""
+
+################ get data ###########################
+
+GET_USER_BY_TG_ID = """
 SELECT *
 FROM users
+WHERE tg_id = ?;
+"""
+
+GET_USER_ID = "SELECT id FROM users WHERE tg_id = ?"
+
+GET_JOURNAL_BY_ID = """
+SELECT *
+FROM journals
 WHERE user_id = ?;
 """
