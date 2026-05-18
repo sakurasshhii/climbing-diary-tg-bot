@@ -28,11 +28,13 @@ from aiogram import Router, F
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 
 from app.bot.states.fsm import FSMFillWorkout
 from app.services.services import UserService, JournalService
-from app.lexic.ru import JOURNAL
+from app.bot.keyboards.journal_keyboards import (
+    date_kboard, train_type_kboard, wrk_write_kboard)
+from app.lexic.ru import JOURNAL, MAIN_MENU_MSG
 
 logger = logging.getLogger(__name__)
 journal_router = Router()
@@ -43,15 +45,25 @@ journal_router = Router()
 
 async def process_date(
         user_id: int, date: dt.date, state: FSMContext,
-        bot_obj: Message | CallbackQuery
+        message: Message
 ):
-    # add date
-    # await state.update_data(journal_date=?)
+    await state.update_data(workout_date=date)
+    await message.answer(
+        text=JOURNAL['fsm_add_train_type'],
+        reply_markup=train_type_kboard)
     await state.set_state(FSMFillWorkout.add_train_type)
 
-    # ask the train type
+###################### FSM ##############################
+###################### escape ###########################
 
-###################### handlers #########################
+@journal_router.message(Command(commands='cancel'), ~StateFilter(default_state))
+async def cancel_processing(
+        message: Message, state: FSMContext) -> None:
+    logging.info(f'Пользователь прервал операцию на состоянии: {state.get_state()}')
+    await state.clear()
+    await message.answer(MAIN_MENU_MSG['/cancel'])
+
+###################### process ##########################
 '''
 /add_workout
 Start FSM process of colleting workout data & update database.
@@ -78,22 +90,14 @@ async def process_add_workout_command(
         logger.info(f'Добавлен новый журнал для юзера id={user_id}')
 
     await state.update_data(journal_no=user.last_journal)
-    await message.answer(text=JOURNAL['fsm_add_date'])
+    await message.answer(
+        text=JOURNAL['fsm_add_date'],
+        reply_markup=date_kboard)
     await state.set_state(FSMFillWorkout.add_date)
 
     # log
     data = await state.get_data()
     logger.info(f'FSM state changed. state.data: {data}')
-
-@journal_router.message(StateFilter(FSMFillWorkout.add_date))
-async def process_add_date(
-        message: Message, state: FSMContext,
-        user_service: UserService) -> None:
-    '''
-    Step 2. Add a date of workout.
-    '''
-    # show keyboard
-    pass
 
 @journal_router.callback_query(
         StateFilter(FSMFillWorkout.add_date),
@@ -102,7 +106,8 @@ async def process_add_date_press(
         cback: CallbackQuery, state: FSMContext) -> None:
     if not cback.from_user:
         raise hand_e.NoInfoFromUserError(__name__)
-    
+
+    print(cback.data)
     user_id = cback.from_user.id
     if F.data == 'today':
         date = dt.date.today()
@@ -110,19 +115,23 @@ async def process_add_date_press(
         date = dt.date.today() - dt.timedelta(days=1)
 
     await process_date(
-        user_id=user_id, state=state, date=date, bot_obj=cback)
+        user_id=user_id, state=state, date=date, message=cback.message)  # type: ignore
 
 @journal_router.callback_query(
         StateFilter(FSMFillWorkout.add_date),
         F.data.in_(['other_date']))
 async def process_add_date_press_other(
         cback: CallbackQuery, state: FSMContext) -> None:
-    # message: write down a date
-    pass
+    if not cback.from_user:
+        raise hand_e.NoInfoFromUserError(__name__)
+
+    await cback.answer(
+        JOURNAL['fsm_other_date'],
+        reply_markup=ReplyKeyboardRemove())
 
 @journal_router.message(
         StateFilter(FSMFillWorkout.add_date),
-        F.text.regexp(r'\d{4}-\d{2}-\d{2}'))
+        F.text.regexp(r'\d{4}-\d{2}-\d{2}'))  # add date filter
 async def process_add_date_other(
         message: Message, state: FSMContext) -> None:
     if not message.from_user:
@@ -132,15 +141,16 @@ async def process_add_date_other(
     date = dt.date.fromisoformat(message.text)  # type: ignore
 
     await process_date(
-        user_id=user_id, state=state, date=date, bot_obj=message)
+        user_id=user_id, state=state, date=date, message=message)
 
 @journal_router.message(
         StateFilter(FSMFillWorkout.add_date),
         F.text)
 async def process_add_date_other_error(
         message: Message, state: FSMContext) -> None:
-    # not valid date
-    pass
+    if not message.from_user:
+        raise hand_e.NoInfoFromUserError(__name__)
+    await message.answer(JOURNAL['errors_invalid_date'])
 
 @journal_router.callback_query(
         StateFilter(FSMFillWorkout.add_train_type),
@@ -150,12 +160,12 @@ async def process_add_train_type(
     '''
     Step 3. Add the training type.
     '''
-    if not cback.from_user:
+    if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
     
-    user_id = cback.from_user.id
-    # add train type
-    # ask train content
+    await state.update_data(train_type=cback.data)
+    await cback.message.answer(JOURNAL['fsm_add_train_content_climb'])
+    await cback.message.answer(JOURNAL['fsm_add_train_content_climb_ex'])
     await state.set_state(FSMFillWorkout.add_train_content)
 
 @journal_router.message(StateFilter(FSMFillWorkout.add_train_content), F.text)
@@ -164,8 +174,8 @@ async def process_add_train_content(
     '''
     Step 3. Add training sets (content).
     '''
-    pass
-    # add train content
+    await state.update_data(content=message.text)
+    await message.answer(JOURNAL['fsm_add_comment'])
     await state.set_state(FSMFillWorkout.add_comment)
 
 @journal_router.message(StateFilter(FSMFillWorkout.add_comment), F.text)
@@ -174,20 +184,31 @@ async def process_add_train_comment(
     '''
     Step 4. Add comment to the train.
     '''
-    pass
-    # add train comment
+    await state.update_data(comments=message.text)
     await state.set_state(FSMFillWorkout.check)
 
-@journal_router.message(StateFilter(FSMFillWorkout.check))
+    ####### тут нужно собрать Workout!
+    data = await state.get_data()
+    await message.answer(
+        text=JOURNAL['fsm_to_check'].format(data),
+        reply_markup=wrk_write_kboard)
+
+@journal_router.callback_query(
+        StateFilter(FSMFillWorkout.check),
+        F.data.in_(['correct']))
 async def process_check_workout(
-        message: Message, state: FSMContext,
+        cback: CallbackQuery, state: FSMContext,
         journal_service: JournalService) -> None:
     '''
     Step 6. Check & push
     '''
-    if not message.from_user:
+    if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
     
-    user_id = message.from_user.id
+    user_id = cback.from_user.id
     data: dict = await state.get_data()
     await journal_service.add_workout(user_id, **data)
+    await cback.message.answer(
+        text=JOURNAL['fsm_complete'],
+        reply_markup=ReplyKeyboardRemove())
+    await state.clear()
