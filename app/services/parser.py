@@ -1,6 +1,8 @@
+import datetime as dt
 import re
 from typing import Sequence
-from app.domain.models import Workout, Row, Route, Exercise
+from app.domain.models import Workout, Row, Route, Exercise, GymTrain, ClimbTrain
+from app.domain.enums import TrainingType
 
 
 class JournalParser:
@@ -13,14 +15,14 @@ class JournalParser:
             if training_type == 'climb_train':
                 result = JournalParser.parse_rows_climb(text)
             else:
-                result = JournalParser.parse_rows_train(text)
+                result = JournalParser.parse_rows_gym(text)
         except ValueError as e:
             return False
         else:
             return result
 
     @staticmethod
-    def parse_rows_train(text: str) -> Sequence[Row]:
+    def parse_rows_gym(text: str) -> Sequence[Row]:
         ''' Use to extract gym training rows from user's message. '''
         
         rows = []
@@ -75,3 +77,19 @@ class JournalParser:
             falls = 0
 
         return Route(grade=grade, falls=int(falls), flash=flash)
+
+    def parse_workout(self, workout_date: dt.date, training_type: str,
+            content: str, comments: str) -> Workout:
+        
+        tr_type = TrainingType[training_type.upper()]
+        if tr_type in [TrainingType.LEAD, TrainingType.BOULDER]:
+            rows = self.parse_rows_climb(content)
+            train = ClimbTrain(
+                type=tr_type, sets=rows, comments=comments)
+        else:
+            rows = self.parse_rows_gym(content)
+            train = GymTrain(
+                type=tr_type, sets=rows, comments=comments)
+        
+        return Workout(
+            date=workout_date, content=[train])

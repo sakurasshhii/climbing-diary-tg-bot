@@ -62,5 +62,5 @@ class JournalRepository:
         )
         return [dict(j) for j in journals]
     
-    async def add_workout(self, user_id: int,  workout: Workout) -> None:
+    async def add_workout(self, user_id: int,  journal_id: int, workout: Workout) -> None:
         pass

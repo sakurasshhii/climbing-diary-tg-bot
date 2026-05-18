@@ -1,6 +1,9 @@
+import datetime as dt
+
 from app.infrastructure.database.repo import UserRepository, JournalRepository
-from app.domain.models import Journal, Workout, User
+from app.domain.models import Journal, Workout, User, ClimbTrain, GymTrain
 from app.domain.exceptions import UserNotFoundError
+from app.domain.enums import TrainingType
 from .parser import JournalParser
 
 
@@ -57,7 +60,10 @@ class JournalService:
         return await self.journal_repo.get_journals(user_id=user_id)
         return Journal()
 
-    async def add_workout(self, tg_id: int, **kwargs) -> None:
+    async def add_workout(
+            self, tg_id: int, journal_no: int,
+            workout_date: dt.date, training_type: str,
+            content: str, comments: str) -> None:
         ################# to do! 
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
@@ -66,12 +72,18 @@ class JournalService:
         journal_no
         workout_date
         training_type
+        training_subtype
         content
         comments<train>
         '''
-        # rows = self.workout_parser.parse_rows(text)
-        # workout = Workout()
-        # await self.journal_repo.add_workout(user_id=user_id, workout=workout)
+        
+        workout = self.workout_parser.parse_workout(
+            workout_date=workout_date, training_type=training_type,
+            content=content, comments=comments
+        )
+        await self.journal_repo.add_workout(
+            user_id=user['id'], journal_id=journal_no, workout=workout
+        )
 
     @staticmethod
     def training_sets_validation(text: str, training_type: str) -> bool:
