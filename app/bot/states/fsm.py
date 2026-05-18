@@ -8,3 +8,4 @@ class FSMFillWorkout(StatesGroup):
     add_train_type = State()
     add_train_content = State()
     add_comment = State()
+    check = State()

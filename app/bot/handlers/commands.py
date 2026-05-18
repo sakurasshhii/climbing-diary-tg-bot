@@ -31,6 +31,6 @@ async def process_help_command(
     user_repo: UserRepository
 ) -> None:
     if message.from_user:
-        user_info = await user_repo.get_user(message.from_user.id) or []
+        user_info = await user_repo.get_user_by_tg(message.from_user.id) or []
         logger.info(f'Получена информация из БД:\n{dict(user_info)}')
     await message.answer(MAIN_MENU_MSG['/help'])
