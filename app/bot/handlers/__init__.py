@@ -1,5 +1,5 @@
 from .commands import commands_router
-from .journal_edition import journal_router
+from .journal_handlers import journal_router
 
 __all__ = ['routers']
 

@@ -1,13 +1,15 @@
 from aiogram import BaseMiddleware
 from typing import Callable, Dict, Any, Awaitable
 
-from app.infrastructure.database.repo import UserRepository
+from app.infrastructure.database.repo import UserRepository, JournalRepository
 from app.infrastructure.database import Database
 
+from app.services.services import JournalService, UserService
 
-class DBUserMiddleware(BaseMiddleware):
+
+class ServicesMiddleware(BaseMiddleware):
     '''
-    Проброс работы с user_repo в хэндлер.
+    Проброс работы с сервисов в хэндлер.
     '''
     def __init__(self, db: Database):
         self.db = db
@@ -18,6 +20,14 @@ class DBUserMiddleware(BaseMiddleware):
         event,
         data: Dict[str, Any]
     ) -> Awaitable[Any]:
+
         user_repo: UserRepository = UserRepository(self.db)
-        data["user_repo"] = user_repo
+        journal_repo: JournalRepository = JournalRepository(self.db)
+        
+        user_service: UserService = UserService(user_repo=user_repo)
+        journal_service: JournalService = JournalService(user_repo=user_repo, journal_repo=journal_repo)
+
+        data['user_service'] = user_service
+        data['journal_service'] = journal_service
+
         return await handler(event, data)

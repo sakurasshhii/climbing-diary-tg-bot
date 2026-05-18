@@ -6,3 +6,4 @@ class TrainingType(Enum):
     BOULDER = 'Boulder'
     GPP = 'GPP'
     SFP = 'SFP'
+    

@@ -1,4 +1,4 @@
-from .db import DBUserMiddleware
+from .db import ServicesMiddleware
 
 
-__all__ = ['DBUserMiddleware', ]
+__all__ = ['ServicesMiddleware', ]

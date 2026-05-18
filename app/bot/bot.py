@@ -7,7 +7,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.bot.handlers import routers
-from app.bot.middlewares import DBUserMiddleware
+from app.bot.middlewares import ServicesMiddleware
 from app.config.config import Config
 from app.infrastructure.database import Database, create_tables
 from app.bot.keyboards.set_menu import set_main_menu
@@ -44,7 +44,7 @@ async def main(config: Config) -> None:
     dp.include_routers(*routers)
 
     logger.info('Including middlewares...')
-    dp.update.middleware(DBUserMiddleware(my_db))
+    dp.update.middleware(ServicesMiddleware(my_db))
 
     logger.info('Start polling...')
     await bot.delete_webhook(drop_pending_updates=True)

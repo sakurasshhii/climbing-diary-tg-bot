@@ -47,6 +47,13 @@ from .enums import TrainingType
 
 ##################### body #####################
 
+@dataclass
+class User:
+    id: int
+    tg_id: int
+    username: str
+    last_journal: int
+
 # is this @dataclass? -> comments as property
 class Journal:
     '''
