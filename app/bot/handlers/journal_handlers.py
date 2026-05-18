@@ -122,10 +122,10 @@ async def process_add_date_press(
         F.data.in_(['other_date']))
 async def process_add_date_press_other(
         cback: CallbackQuery, state: FSMContext) -> None:
-    if not cback.from_user:
+    if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
 
-    await cback.answer(
+    await cback.message.answer(
         JOURNAL['fsm_other_date'],
         reply_markup=ReplyKeyboardRemove())
 
@@ -162,10 +162,15 @@ async def process_add_train_type(
     '''
     if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
-    
+
     await state.update_data(train_type=cback.data)
-    await cback.message.answer(JOURNAL['fsm_add_train_content_climb'])
-    await cback.message.answer(JOURNAL['fsm_add_train_content_climb_ex'])
+
+    match cback.data:
+        case 'climb_train':
+            await cback.message.answer(JOURNAL['fsm_add_content_climb'])
+            await cback.message.answer(JOURNAL['fsm_add_content_climb_ex'])
+        case _:
+            await cback.message.answer(JOURNAL['fsm_add_content_gym'])
     await state.set_state(FSMFillWorkout.add_train_content)
 
 @journal_router.message(StateFilter(FSMFillWorkout.add_train_content), F.text)
@@ -174,9 +179,16 @@ async def process_add_train_content(
     '''
     Step 3. Add training sets (content).
     '''
-    await state.update_data(content=message.text)
-    await message.answer(JOURNAL['fsm_add_comment'])
-    await state.set_state(FSMFillWorkout.add_comment)
+    if message.text:
+        workout_data = await state.get_data()
+        is_valid = JournalService.training_sets_validation(
+            text=message.text, training_type=workout_data['training_type'])
+        if not is_valid:
+            await message.answer(JOURNAL['error_invalid_sets'])
+            
+        await state.update_data(content=message.text)
+        await message.answer(JOURNAL['fsm_add_comment'])
+        await state.set_state(FSMFillWorkout.add_comment)
 
 @journal_router.message(StateFilter(FSMFillWorkout.add_comment), F.text)
 async def process_add_train_comment(
@@ -200,11 +212,11 @@ async def process_check_workout(
         cback: CallbackQuery, state: FSMContext,
         journal_service: JournalService) -> None:
     '''
-    Step 6. Check & push
+    Step 6. Check & push into DB
     '''
     if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
-    
+
     user_id = cback.from_user.id
     data: dict = await state.get_data()
     await journal_service.add_workout(user_id, **data)

@@ -1,9 +1,7 @@
-import aiosqlite
-
 from app.infrastructure.database.repo import UserRepository, JournalRepository
 from app.domain.models import Journal, Workout, User
 from app.domain.exceptions import UserNotFoundError
-from .parser import WorkoutParser
+from .parser import JournalParser
 
 
 class UserService:
@@ -42,7 +40,7 @@ class JournalService:
             journal_repo: JournalRepository) -> None:
         self.user_repo = user_repo
         self.journal_repo = journal_repo
-        self.workout_parser = WorkoutParser()
+        self.workout_parser = JournalParser()
     
     async def add_journal(self, tg_id: int, comments:str = '') -> None:
         user = await self.user_repo.get_user_by_tg(tg_id)
@@ -69,3 +67,7 @@ class JournalService:
         # rows = self.workout_parser.parse_rows(text)
         # workout = Workout()
         # await self.journal_repo.add_workout(user_id=user_id, workout=workout)
+
+    @staticmethod
+    def training_sets_validation(text: str, training_type: str) -> bool:
+        return bool(JournalParser.is_valid_rows(text, training_type=training_type))
