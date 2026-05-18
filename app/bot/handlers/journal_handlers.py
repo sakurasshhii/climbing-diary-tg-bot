@@ -33,14 +33,15 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from app.bot.states.fsm import FSMFillWorkout
 from app.services.services import UserService, JournalService
 from app.bot.keyboards.journal_keyboards import (
-    date_kboard, train_type_kboard, wrk_write_kboard)
+    date_kboard, train_type_kboard, wrk_write_kboard,
+    gym_train_kboard, climb_train_kboard
+)
 from app.lexic.ru import JOURNAL, MAIN_MENU_MSG
 
 logger = logging.getLogger(__name__)
 journal_router = Router()
 
 
-###################### add workout ######################
 ###################### functions ########################
 
 async def process_date(
@@ -53,8 +54,7 @@ async def process_date(
         reply_markup=train_type_kboard)
     await state.set_state(FSMFillWorkout.add_train_type)
 
-###################### FSM ##############################
-###################### escape ###########################
+############################ escape ##########################################
 
 @journal_router.message(Command(commands='cancel'), ~StateFilter(default_state))
 async def cancel_processing(
@@ -63,7 +63,7 @@ async def cancel_processing(
     await state.clear()
     await message.answer(MAIN_MENU_MSG['/cancel'])
 
-###################### process ##########################
+############################# fill form ######################################
 '''
 /add_workout
 Start FSM process of colleting workout data & update database.
@@ -99,6 +99,8 @@ async def process_add_workout_command(
     data = await state.get_data()
     logger.info(f'FSM state changed. state.data: {data}')
 
+############################# add a date #####################################
+
 @journal_router.callback_query(
         StateFilter(FSMFillWorkout.add_date),
         F.data.in_(['today', 'yesterday']))
@@ -131,14 +133,14 @@ async def process_add_date_press_other(
 
 @journal_router.message(
         StateFilter(FSMFillWorkout.add_date),
-        F.text.regexp(r'\d{4}-\d{2}-\d{2}'))  # add date filter
+        F.text.regexp(r'\d{4}-\d{2}-\d{2}'))               # add date filter
 async def process_add_date_other(
         message: Message, state: FSMContext) -> None:
     if not message.from_user:
         raise hand_e.NoInfoFromUserError(__name__)
     
     user_id = message.from_user.id
-    date = dt.date.fromisoformat(message.text)  # type: ignore
+    date = dt.date.fromisoformat(message.text)             # type: ignore
 
     await process_date(
         user_id=user_id, state=state, date=date, message=message)
@@ -152,6 +154,8 @@ async def process_add_date_other_error(
         raise hand_e.NoInfoFromUserError(__name__)
     await message.answer(JOURNAL['errors_invalid_date'])
 
+############################# add training type ########################
+
 @journal_router.callback_query(
         StateFilter(FSMFillWorkout.add_train_type),
         F.data.in_(['climb_train', 'gym_train']))
@@ -163,15 +167,37 @@ async def process_add_train_type(
     if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
 
-    await state.update_data(train_type=cback.data)
-
+    await state.update_data(training_type=cback.data)
     match cback.data:
+        case 'climb_train':
+            await cback.message.edit_reply_markup(       # type: ignore
+                reply_markup=climb_train_kboard
+            )
+        case _:
+            await cback.message.edit_reply_markup(       # type: ignore
+                reply_markup=gym_train_kboard
+            )
+
+@journal_router.callback_query(
+    StateFilter(FSMFillWorkout.add_train_type),
+    F.data.in_(['boulder', 'lead', 'SFP', 'GPP']))
+async def process_add_train_subtype(
+    cback: CallbackQuery, state: FSMContext) -> None:
+
+    if not cback.from_user or not cback.message:
+        raise hand_e.NoInfoFromUserError(__name__)
+    await state.update_data(training_subtype=cback.data)
+
+    state_data = await state.get_data()
+    match state_data['training_type']:
         case 'climb_train':
             await cback.message.answer(JOURNAL['fsm_add_content_climb'])
             await cback.message.answer(JOURNAL['fsm_add_content_climb_ex'])
         case _:
             await cback.message.answer(JOURNAL['fsm_add_content_gym'])
     await state.set_state(FSMFillWorkout.add_train_content)
+
+############################# add training content ########################
 
 @journal_router.message(StateFilter(FSMFillWorkout.add_train_content), F.text)
 async def process_add_train_content(
@@ -185,10 +211,12 @@ async def process_add_train_content(
             text=message.text, training_type=workout_data['training_type'])
         if not is_valid:
             await message.answer(JOURNAL['error_invalid_sets'])
-            
+
         await state.update_data(content=message.text)
         await message.answer(JOURNAL['fsm_add_comment'])
         await state.set_state(FSMFillWorkout.add_comment)
+
+############################# add comment #################################
 
 @journal_router.message(StateFilter(FSMFillWorkout.add_comment), F.text)
 async def process_add_train_comment(
@@ -197,13 +225,14 @@ async def process_add_train_comment(
     Step 4. Add comment to the train.
     '''
     await state.update_data(comments=message.text)
-    await state.set_state(FSMFillWorkout.check)
-
-    ####### тут нужно собрать Workout!
     data = await state.get_data()
     await message.answer(
         text=JOURNAL['fsm_to_check'].format(data),
         reply_markup=wrk_write_kboard)
+    
+    await state.set_state(FSMFillWorkout.check)
+
+############################# add to DB ####################################
 
 @journal_router.callback_query(
         StateFilter(FSMFillWorkout.check),
@@ -224,3 +253,5 @@ async def process_check_workout(
         text=JOURNAL['fsm_complete'],
         reply_markup=ReplyKeyboardRemove())
     await state.clear()
+
+    logger.info(f'Собранная информация state.get_data(): {data}')

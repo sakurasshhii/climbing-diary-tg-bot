@@ -62,8 +62,13 @@ class JournalService:
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
-
-        user_id = user['id']
+        '''
+        journal_no
+        workout_date
+        training_type
+        content
+        comments<train>
+        '''
         # rows = self.workout_parser.parse_rows(text)
         # workout = Workout()
         # await self.journal_repo.add_workout(user_id=user_id, workout=workout)
