@@ -1,8 +1,10 @@
 import aiosqlite
+import json
 from .database import Database, Transaction
 from app.domain.models import Workout
 from .sql_models import (
-    INSERT_USER, INSERT_JOURNAL,
+    INSERT_USER, INSERT_JOURNAL, INSERT_WORKOUT,
+    INSERT_TRAIN, INSERT_ROW, INSERT_EXERCISE, INSERT_ROUTE,
     GET_USER_BY_TG_ID, GET_JOURNAL, GET_USER_ID,
 )
 
@@ -62,5 +64,49 @@ class JournalRepository:
         )
         return [dict(j) for j in journals]
     
-    async def add_workout(self, user_id: int,  journal_id: int, workout: Workout) -> None:
-        pass
+    async def add_workout(self,
+            user_id: int, 
+            journal_id: int,
+            workout: Workout
+    ) -> None:
+        async with Transaction(self.db) as db:
+            cursor = await db.execute(
+                INSERT_WORKOUT,
+                (journal_id, workout.date, workout.comments),
+                commit=False
+            )
+            workout_id = cursor.lastrowid
+
+            for train in workout.content:
+                cursor = await db.execute(
+                    INSERT_TRAIN,
+                    (workout_id, train.category, train.type, train.comments),
+                    commit=False
+                )
+
+                train_id = cursor.lastrowid
+
+                for i, row in enumerate(train.rows):
+                    cursor = await db.execute(
+                        INSERT_ROW,
+                        (train_id, i, train.comments),
+                        commit=False
+                    )
+
+                    row_id = cursor.lastrowid
+
+                    if train.category == 'Climbing':
+                        for i_route, route in enumerate(row.content):
+                            await db.execute(
+                                INSERT_ROUTE,
+                                (row_id, i_route, route.grade, route.falls, route.flash),
+                                commit=False
+                            )
+                    
+                    elif train.category == 'Gym':
+                        for i_ex, exercise in enumerate(row.content):
+                            await db.execute(
+                                INSERT_EXERCISE,
+                                (row_id, i_ex, exercise.name, json.dumps(exercise.repeats)),
+                                commit=False
+                            )

@@ -158,7 +158,7 @@ async def process_add_date_other_error(
 
 @journal_router.callback_query(
         StateFilter(FSMFillWorkout.add_train_type),
-        F.data.in_(['climb_train', 'gym_train']))
+        F.data.in_(['climbing', 'gym']))
 async def process_add_train_type(
         cback: CallbackQuery, state: FSMContext) -> None:
     '''
@@ -167,9 +167,9 @@ async def process_add_train_type(
     if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
 
-    await state.update_data(training_type=cback.data)
+    await state.update_data(training_category=cback.data)
     match cback.data:
-        case 'climb_train':
+        case 'climbing':
             await cback.message.edit_reply_markup(       # type: ignore
                 reply_markup=climb_train_kboard
             )
@@ -186,11 +186,11 @@ async def process_add_train_subtype(
 
     if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
-    await state.update_data(training_subtype=cback.data)
+    await state.update_data(training_type=cback.data)
 
     state_data = await state.get_data()
-    match state_data['training_type']:
-        case 'climb_train':
+    match state_data['training_category']:
+        case 'climbing':
             await cback.message.answer(JOURNAL['fsm_add_content_climb'])
             await cback.message.answer(JOURNAL['fsm_add_content_climb_ex'])
         case _:
@@ -208,9 +208,10 @@ async def process_add_train_content(
     if message.text:
         workout_data = await state.get_data()
         is_valid = JournalService.training_sets_validation(
-            text=message.text, training_type=workout_data['training_type'])
+            text=message.text, training_type=workout_data['training_category'])
         if not is_valid:
             await message.answer(JOURNAL['error_invalid_sets'])
+            return
 
         await state.update_data(content=message.text)
         await message.answer(JOURNAL['fsm_add_comment'])

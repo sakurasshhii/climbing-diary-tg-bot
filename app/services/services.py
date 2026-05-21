@@ -3,7 +3,7 @@ import datetime as dt
 from app.infrastructure.database.repo import UserRepository, JournalRepository
 from app.domain.models import Journal, Workout, User, ClimbTrain, GymTrain
 from app.domain.exceptions import UserNotFoundError
-from app.domain.enums import TrainingType
+from app.domain.enums import TrainingType, TrainingCategory
 from .parser import JournalParser
 
 
@@ -43,8 +43,7 @@ class JournalService:
             journal_repo: JournalRepository) -> None:
         self.user_repo = user_repo
         self.journal_repo = journal_repo
-        self.workout_parser = JournalParser()
-    
+
     async def add_journal(self, tg_id: int, comments:str = '') -> None:
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
@@ -62,27 +61,24 @@ class JournalService:
 
     async def add_workout(
             self, tg_id: int, journal_no: int,
-            workout_date: dt.date, training_type: str,
-            content: str, comments: str) -> None:
+            workout_date: dt.date, training_category: str,
+            training_type: str, content: str, comments: str) -> None:
         ################# to do! 
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
-        '''
-        journal_no
-        workout_date
-        training_type
-        training_subtype
-        content
-        comments<train>
-        '''
-        
-        workout = self.workout_parser.parse_workout(
-            workout_date=workout_date, training_type=training_type,
-            content=content, comments=comments
+
+        workout = JournalParser.parse_workout(
+            workout_date=workout_date,
+            training_category=TrainingCategory[training_category.upper()],
+            training_type=TrainingType[training_type.upper()],
+            content=content,
+            comments=comments
         )
         await self.journal_repo.add_workout(
-            user_id=user['id'], journal_id=journal_no, workout=workout
+            user_id=user['id'],
+            journal_id=journal_no,
+            workout=workout
         )
 
     @staticmethod

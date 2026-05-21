@@ -6,3 +6,7 @@ class TrainingType(Enum):
     BOULDER = 'Boulder'
     GPP = 'GPP'
     SFP = 'SFP'
+
+class TrainingCategory(Enum):
+    CLIMBING = 'Climbing'
+    GYM = 'Gym'

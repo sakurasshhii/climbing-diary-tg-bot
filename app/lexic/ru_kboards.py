@@ -4,8 +4,8 @@ WORKOUT_DATE: dict[str, str] = {
     'other_date': 'Другой день...'
 }
 TRAINING_TYPE: dict[str, str] = {
-    'climb_train': 'Тренировка по скалолазанию',
-    'gym_train': 'ОФП или СФП'
+    'climbing': 'Тренировка по скалолазанию',
+    'gym': 'ОФП или СФП'
 }
 WORKOUT_WRITE: dict[str, str] = {
     'correct': 'Записать',

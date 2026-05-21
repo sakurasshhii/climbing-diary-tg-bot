@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS workouts (
 CREATE TABLE IF NOT EXISTS trains (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     workout_id INTEGER NOT NULL,
-    category TEXT NOT NULL,   -- climb/gym
+    category TEXT NOT NULL,   -- Climbing/Gym
     type TEXT NOT NULL,       -- Lead/Boulder/GPP/SFP
     comments TEXT,
     
@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS routes (
 CREATE TABLE IF NOT EXISTS exercises (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     row_id INTEGER NOT NULL,
+    exercise_order INTEGER NOT NULL,
     name TEXT NOT NULL,
     repeats TEXT NOT NULL,      -- json
 
@@ -102,6 +103,30 @@ INSERT INTO journals (user_id, comments)
 VALUES (?, ?);
 """
 
+INSERT_WORKOUT = """
+INSERT INTO workouts (journal_id, workout_date, comments)
+VALUES (?, ?, ?):
+"""
+
+INSERT_TRAIN = """
+INSER INTO trains (workout_id, category, type, comments)
+VALUES (?, ?, ?, ?):
+"""
+
+INSERT_ROW = """
+INSERT INTO rows (train_id, row_order, comments)
+VALUES (?, ?, ?);
+"""
+
+INSERT_ROUTE = """
+INSERT INTO routes (row_id, route_order, grade, falls, flash)
+VALUES (?, ?, ?, ?, ?)
+"""
+
+INSERT_EXERCISE = """
+INSERT INTO exercises (row_id, exercise_order, name, repeats)
+VALUES (?, ?, ?, ?)
+"""
 ################ get data ###########################
 
 GET_USER_BY_TG_ID = """

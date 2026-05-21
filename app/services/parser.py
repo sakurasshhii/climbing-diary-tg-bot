@@ -2,29 +2,36 @@ import datetime as dt
 import re
 from typing import Sequence
 from app.domain.models import Workout, Row, Route, Exercise, GymTrain, ClimbTrain
-from app.domain.enums import TrainingType
+from app.domain.enums import TrainingType, TrainingCategory
 
 
 class JournalParser:
     '''
     Workout parser to get info from user message.
     '''
-    @staticmethod
-    def is_valid_rows(text: str, training_type: str) -> bool | Sequence[Row]:
+    @classmethod
+    def is_valid_rows(cls, text: str, training_type: str) -> bool | Sequence[Row]:
         try:
-            if training_type == 'climb_train':
-                result = JournalParser.parse_rows_climb(text)
-            else:
-                result = JournalParser.parse_rows_gym(text)
+            tr_type = TrainingCategory([training_type.upper()])
+            rows = cls.parse_rows(text, tr_type)
         except ValueError as e:
             return False
         else:
-            return result
+            return rows
 
-    @staticmethod
-    def parse_rows_gym(text: str) -> Sequence[Row]:
-        ''' Use to extract gym training rows from user's message. '''
-        
+    @classmethod
+    def parse_rows(cls, text: str, training_category: TrainingCategory) -> Sequence[Row]:
+        '''Use to extract gum/climbing training rows(sets) from user's message. '''
+
+        if training_category == TrainingCategory.CLIMBING:
+            return cls.parse_rows_climbing(text)
+        elif training_category == TrainingCategory.GYM:
+            return cls.parse_rows_gym(text)
+        else:
+            raise TypeError(f'Incorrect trainig category: {training_category}')
+
+    @classmethod
+    def parse_rows_gym(cls, text: str) -> Sequence[Row]:
         rows = []
 
         for row in text.split('\n'):
@@ -39,13 +46,13 @@ class JournalParser:
 
         return rows
 
-    @staticmethod
-    def parse_rows_climb(text: str) -> Sequence[Row]:
-        ''' Use to extract climbing training rows from user's message. '''
-
+    @classmethod
+    def parse_rows_climbing(cls, text: str) -> Sequence[Row]:
         rows = []
+
         for line in text.split('\n'):
             routes, comments = [], ''
+
             for elm in line.split('/'):
                 try:
                     routes.append(JournalParser.get_route(elm))
@@ -58,8 +65,8 @@ class JournalParser:
 
         return rows
 
-    @staticmethod
-    def get_route(text: str) -> Route:
+    @classmethod
+    def get_route(cls, text: str) -> Route:
         ''' Use to extract Route from user's message. '''
 
         match = re.fullmatch(r'(?P<grade>\d[abcабс]\+?)(?P<falls>\s\d)?', text)
@@ -78,18 +85,21 @@ class JournalParser:
 
         return Route(grade=grade, falls=int(falls), flash=flash)
 
-    def parse_workout(self, workout_date: dt.date, training_type: str,
-            content: str, comments: str) -> Workout:
-        
-        tr_type = TrainingType[training_type.upper()]
-        if tr_type in [TrainingType.LEAD, TrainingType.BOULDER]:
-            rows = self.parse_rows_climb(content)
+    @classmethod
+    def parse_workout(cls, workout_date: dt.date, training_category: TrainingCategory,
+            training_type: TrainingType, content: str, comments: str) -> Workout:
+        ''' Use to create Workout from tg form. '''
+        rows = list(cls.parse_rows(content, training_category=training_category))
+
+        if training_category == TrainingCategory.CLIMBING:
             train = ClimbTrain(
-                type=tr_type, sets=rows, comments=comments)
-        else:
-            rows = self.parse_rows_gym(content)
+                type=training_type, rows=rows, comments=comments)
+        elif training_category == TrainingCategory.GYM:
+            rows = list(cls.parse_rows_gym(content))
             train = GymTrain(
-                type=tr_type, sets=rows, comments=comments)
-        
+                type=training_type, rows=rows, comments=comments)
+        else:
+            raise ValueError(f'Incorrect trainig category: {training_category}')
+
         return Workout(
             date=workout_date, content=[train])

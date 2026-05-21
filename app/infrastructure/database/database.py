@@ -12,11 +12,12 @@ class Database:
         self.conn = connection
     
     async def execute(self, query: str, params: tuple | None = None,
-                      commit=True) -> None:
+                      commit=True) -> aiosqlite.Cursor:
         'Для запросов: INSERT, UPDATE, DELETE, CREATE TABLE'
-        await self.conn.execute(query, params or [])
+        result = await self.conn.execute(query, params or [])
         if commit:
             await self.conn.commit()
+        return result
 
     async def fetchone(self, query: str, params: tuple | None = None):
         'Возвращает одну строку из результата запроса'
