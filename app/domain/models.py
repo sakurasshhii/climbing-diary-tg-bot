@@ -64,38 +64,38 @@ class Journal:
     '''
     Great class contains multiple workout sessions.
     '''
-    _content: list[Workout] = field(default_factory=list)
+    content: list[Workout] = field(default_factory=list)
     comments: str = ''
 
     def __post_init__(self):
-        if self._content:
-            if not all(isinstance(x, Workout) for x in self._content):
+        if self.content:
+            if not all(isinstance(x, Workout) for x in self.content):
                 raise TypeError('Journal must contain Workout objects only.')
-            self._content.sort(key=lambda x: x.date)
+            self.content.sort(key=lambda x: x.date)
 
     @property
     def period(self) -> tuple[dt.date | None, dt.date | None]:
-        if self._content:
-            return (self._content[0].date, self._content[-1].date)
+        if self.content:
+            return (self.content[0].date, self.content[-1].date)
         return (None, None)
 
     def add_workout(self, workout: Workout):
         if isinstance (workout, Workout):
-            self._content.append(workout)
-            if len(self) >=2 and self._content[-2].date > workout.date:
-                self._content.sort(key=lambda x: x.date)
+            self.content.append(workout)
+            if len(self) >=2 and self.content[-2].date > workout.date:
+                self.content.sort(key=lambda x: x.date)
         else:
             raise TypeError('Journal could contain Workout objects only.')
 
     def __str__(self) -> str:
-        if not self._content:
+        if not self.content:
             return 'Empty journal.'
         date = f'[{"-".join(map(str, self.period))}]\n'
         about = f'About this journal: {self.comments}\n' if self.comments else ''
-        return date + about + '\n ——— \n'.join(x.__str__() for x in self._content)
+        return date + about + '\n ——— \n'.join(x.__str__() for x in self.content)
     
     def __len__(self):
-        return len(self._content)
+        return len(self.content)
 
 
 @dataclass
@@ -105,25 +105,25 @@ class Workout:
     It could contain several training types inside.
     '''
     date: dt.date
-    _content: list[Train] = field(default_factory=list)
+    content: list[Train] = field(default_factory=list)
     comments: str = ''
 
     def add_train(self, train: Train):
         if isinstance(train, Train):
-            self._content.append(train)
+            self.content.append(train)
         else:
             raise TypeError('Workout could contain Train objects only.')
     
     @property
-    def content(self) -> Sequence[Train]:
-        return tuple(self._content)
+    def get_content(self) -> Sequence[Train]:
+        return tuple(self.content)
 
     def __str__(self) -> str:
-        if not self._content:
+        if not self.content:
             return f'Date: {self.date.isoformat()}; no trainings yet.'
         return '\n'.join([
             f'Date: {self.date.isoformat()};',
-            *(x.__str__() for x in self._content)
+            *(x.__str__() for x in self.content)
         ])
 
 
@@ -133,32 +133,29 @@ class Train:
     Group of the same type of physical activity.
     Used as parent for climbing/not climbing.
     '''
-    _type: TrainingType
-    _rows: list[Row]
+    training_category: TrainingCategory = field(init=False)
+    type: TrainingType
+    rows: list[Row]
     comments: str = ''
 
     @property
-    def type(self) -> str:
-        return self._type.name
-
-    @property
-    def rows(self) -> Sequence[Row]:
-        return tuple(self._rows)
+    def get_rows(self) -> Sequence[Row]:
+        return tuple(self.rows)
 
     def add_row(self, row: Row):
         if isinstance(row, Row):
-            self._rows.append(row)
+            self.rows.append(row)
         else:
             raise TypeError('Train could contain Row objects only.')
 
     def __str__(self) -> str:
-        if not self._rows:
-            return f'{self._type.name}: empty training.'
-        
-        comments = f'\nComments: {self.comments}' if self.comments else ''
-        rows = '\n'.join(str(x) for x in self._rows)
+        if not self.rows:
+            return f'{self.type.name}: empty training.'
 
-        return f'{self._type.name}:\n{rows}{comments}'
+        comments = f'\nComments: {self.comments}' if self.comments else ''
+        rows = '\n'.join(str(x) for x in self.rows)
+
+        return f'{self.type.name}:\n{rows}{comments}'
 
 
 @dataclass
@@ -176,19 +173,19 @@ class Row:
     '''
     Container used to group activity in one training set.
     '''
-    _content: tuple[Route | Exercise, ...]
+    content: tuple[Route | Exercise, ...]
     comments: str = ''
 
     def __post_init__(self) -> None:
-        if not len(self._content):
+        if not len(self.content):
             raise ValueError('Empty set is not avaiable.')
     
     @property
-    def content(self) -> Sequence[Route | Exercise]:
-        return tuple(self._content)
+    def get_content(self) -> Sequence[Route | Exercise]:
+        return tuple(self.content)
 
     def __str__(self) -> str:
-        content = ' | '.join((x.__str__() for x in self._content))
+        content = ' | '.join((x.__str__() for x in self.content))
         comments = f' ({self.comments})' if self.comments else ''
         return content + comments
 

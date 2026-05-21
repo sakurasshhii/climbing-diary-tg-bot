@@ -1,7 +1,8 @@
 import aiosqlite
 import json
 from .database import Database, Transaction
-from app.domain.models import Workout
+from app.domain.models import Workout, ClimbTrain, GymTrain
+from app.domain.enums import TrainingCategory
 from .sql_models import (
     INSERT_USER, INSERT_JOURNAL, INSERT_WORKOUT,
     INSERT_TRAIN, INSERT_ROW, INSERT_EXERCISE, INSERT_ROUTE,
@@ -65,7 +66,6 @@ class JournalRepository:
         return [dict(j) for j in journals]
     
     async def add_workout(self,
-            user_id: int, 
             journal_id: int,
             workout: Workout
     ) -> None:
@@ -80,7 +80,7 @@ class JournalRepository:
             for train in workout.content:
                 cursor = await db.execute(
                     INSERT_TRAIN,
-                    (workout_id, train.category, train.type, train.comments),
+                    (workout_id, train.training_category.name, train.type.name, train.comments),
                     commit=False
                 )
 
@@ -89,24 +89,24 @@ class JournalRepository:
                 for i, row in enumerate(train.rows):
                     cursor = await db.execute(
                         INSERT_ROW,
-                        (train_id, i, train.comments),
+                        (train_id, i, row.comments),
                         commit=False
                     )
 
                     row_id = cursor.lastrowid
 
-                    if train.category == 'Climbing':
+                    if isinstance(train, ClimbTrain):
                         for i_route, route in enumerate(row.content):
                             await db.execute(
                                 INSERT_ROUTE,
-                                (row_id, i_route, route.grade, route.falls, route.flash),
+                                (row_id, i_route, route.grade, route.falls, int(route.flash)),   # type: ignore
                                 commit=False
                             )
-                    
-                    elif train.category == 'Gym':
+
+                    elif isinstance(train, GymTrain):
                         for i_ex, exercise in enumerate(row.content):
                             await db.execute(
                                 INSERT_EXERCISE,
-                                (row_id, i_ex, exercise.name, json.dumps(exercise.repeats)),
+                                (row_id, i_ex, exercise.name, json.dumps(exercise.repeats)),   # type: ignore
                                 commit=False
                             )

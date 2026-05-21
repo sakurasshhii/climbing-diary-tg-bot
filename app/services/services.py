@@ -63,7 +63,6 @@ class JournalService:
             self, tg_id: int, journal_no: int,
             workout_date: dt.date, training_category: str,
             training_type: str, content: str, comments: str) -> None:
-        ################# to do! 
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
@@ -76,11 +75,11 @@ class JournalService:
             comments=comments
         )
         await self.journal_repo.add_workout(
-            user_id=user['id'],
             journal_id=journal_no,
             workout=workout
         )
 
     @staticmethod
-    def training_sets_validation(text: str, training_type: str) -> bool:
-        return bool(JournalParser.is_valid_rows(text, training_type=training_type))
+    def training_sets_validation(text: str, training_cat: str) -> bool:
+        return bool(JournalParser.is_valid_rows(text, training_category=training_cat))
+    

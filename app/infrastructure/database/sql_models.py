@@ -105,12 +105,12 @@ VALUES (?, ?);
 
 INSERT_WORKOUT = """
 INSERT INTO workouts (journal_id, workout_date, comments)
-VALUES (?, ?, ?):
+VALUES (?, ?, ?);
 """
 
 INSERT_TRAIN = """
-INSER INTO trains (workout_id, category, type, comments)
-VALUES (?, ?, ?, ?):
+INSERT INTO trains (workout_id, category, type, comments)
+VALUES (?, ?, ?, ?);
 """
 
 INSERT_ROW = """
@@ -120,12 +120,12 @@ VALUES (?, ?, ?);
 
 INSERT_ROUTE = """
 INSERT INTO routes (row_id, route_order, grade, falls, flash)
-VALUES (?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?);
 """
 
 INSERT_EXERCISE = """
 INSERT INTO exercises (row_id, exercise_order, name, repeats)
-VALUES (?, ?, ?, ?)
+VALUES (?, ?, ?, ?);
 """
 ################ get data ###########################
 

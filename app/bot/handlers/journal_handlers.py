@@ -49,17 +49,18 @@ async def process_date(
         message: Message
 ):
     await state.update_data(workout_date=date)
+    await state.set_state(FSMFillWorkout.add_train_type)
     await message.answer(
         text=JOURNAL['fsm_add_train_type'],
         reply_markup=train_type_kboard)
-    await state.set_state(FSMFillWorkout.add_train_type)
 
 ############################ escape ##########################################
 
 @journal_router.message(Command(commands='cancel'), ~StateFilter(default_state))
 async def cancel_processing(
         message: Message, state: FSMContext) -> None:
-    logging.info(f'Пользователь прервал операцию на состоянии: {state.get_state()}')
+    user_state = await state.get_state()
+    logging.info(f'Пользователь прервал операцию на состоянии: {user_state}')
     await state.clear()
     await message.answer(MAIN_MENU_MSG['/cancel'])
 
@@ -85,15 +86,16 @@ async def process_add_workout_command(
     user = await user_service.get_user_assured(user_id)
 
     if user.last_journal == 0:
-        await message.answer(text=JOURNAL['errors_journal_0'])
+        await message.answer(text=JOURNAL['error_journal_0'])
         await journal_service.add_journal(user_id)
         logger.info(f'Добавлен новый журнал для юзера id={user_id}')
+        user = await user_service.get_user_assured(user_id)
 
     await state.update_data(journal_no=user.last_journal)
+    await state.set_state(FSMFillWorkout.add_date)
     await message.answer(
         text=JOURNAL['fsm_add_date'],
         reply_markup=date_kboard)
-    await state.set_state(FSMFillWorkout.add_date)
 
     # log
     data = await state.get_data()
@@ -109,9 +111,8 @@ async def process_add_date_press(
     if not cback.from_user:
         raise hand_e.NoInfoFromUserError(__name__)
 
-    print(cback.data)
     user_id = cback.from_user.id
-    if F.data == 'today':
+    if cback.data == 'today':
         date = dt.date.today()
     else:
         date = dt.date.today() - dt.timedelta(days=1)
@@ -133,14 +134,17 @@ async def process_add_date_press_other(
 
 @journal_router.message(
         StateFilter(FSMFillWorkout.add_date),
-        F.text.regexp(r'\d{4}-\d{2}-\d{2}'))               # add date filter
+        F.text.regexp(r'^\d{4}-\d{2}-\d{2}$'))               # add date filter
 async def process_add_date_other(
         message: Message, state: FSMContext) -> None:
     if not message.from_user:
         raise hand_e.NoInfoFromUserError(__name__)
     
     user_id = message.from_user.id
-    date = dt.date.fromisoformat(message.text)             # type: ignore
+    try:
+        date = dt.date.fromisoformat(message.text)             # type: ignore
+    except TypeError as e:
+        await message.answer(JOURNAL['error_invalid_date'])
 
     await process_date(
         user_id=user_id, state=state, date=date, message=message)
@@ -149,10 +153,10 @@ async def process_add_date_other(
         StateFilter(FSMFillWorkout.add_date),
         F.text)
 async def process_add_date_other_error(
-        message: Message, state: FSMContext) -> None:
+        message: Message) -> None:
     if not message.from_user:
         raise hand_e.NoInfoFromUserError(__name__)
-    await message.answer(JOURNAL['errors_invalid_date'])
+    await message.answer(JOURNAL['error_invalid_date'])
 
 ############################# add training type ########################
 
@@ -187,6 +191,7 @@ async def process_add_train_subtype(
     if not cback.from_user or not cback.message:
         raise hand_e.NoInfoFromUserError(__name__)
     await state.update_data(training_type=cback.data)
+    await state.set_state(FSMFillWorkout.add_train_content)
 
     state_data = await state.get_data()
     match state_data['training_category']:
@@ -195,7 +200,6 @@ async def process_add_train_subtype(
             await cback.message.answer(JOURNAL['fsm_add_content_climb_ex'])
         case _:
             await cback.message.answer(JOURNAL['fsm_add_content_gym'])
-    await state.set_state(FSMFillWorkout.add_train_content)
 
 ############################# add training content ########################
 
@@ -208,14 +212,21 @@ async def process_add_train_content(
     if message.text:
         workout_data = await state.get_data()
         is_valid = JournalService.training_sets_validation(
-            text=message.text, training_type=workout_data['training_category'])
+            text=message.text,
+            training_cat=workout_data['training_category']
+        )
+        
+        logger.info(f'user message: {message.text}')
+        logger.info(f'is valid: {is_valid}')
+        logger.info(f'args [training_cat=workout_data["training_category"]]:{workout_data['training_category']}')
+
         if not is_valid:
             await message.answer(JOURNAL['error_invalid_sets'])
             return
 
         await state.update_data(content=message.text)
-        await message.answer(JOURNAL['fsm_add_comment'])
         await state.set_state(FSMFillWorkout.add_comment)
+        await message.answer(JOURNAL['fsm_add_comment'])
 
 ############################# add comment #################################
 
@@ -226,12 +237,12 @@ async def process_add_train_comment(
     Step 4. Add comment to the train.
     '''
     await state.update_data(comments=message.text)
+    await state.set_state(FSMFillWorkout.check)
     data = await state.get_data()
     await message.answer(
         text=JOURNAL['fsm_to_check'].format(data),
         reply_markup=wrk_write_kboard)
     
-    await state.set_state(FSMFillWorkout.check)
 
 ############################# add to DB ####################################
 

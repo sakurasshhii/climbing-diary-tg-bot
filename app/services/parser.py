@@ -1,8 +1,12 @@
 import datetime as dt
 import re
+import logging
+
 from typing import Sequence
 from app.domain.models import Workout, Row, Route, Exercise, GymTrain, ClimbTrain
 from app.domain.enums import TrainingType, TrainingCategory
+
+logger = logging.getLogger(__name__)
 
 
 class JournalParser:
@@ -10,9 +14,9 @@ class JournalParser:
     Workout parser to get info from user message.
     '''
     @classmethod
-    def is_valid_rows(cls, text: str, training_type: str) -> bool | Sequence[Row]:
+    def is_valid_rows(cls, text: str, training_category: str) -> bool | Sequence[Row]:
         try:
-            tr_type = TrainingCategory([training_type.upper()])
+            tr_type = TrainingCategory[training_category.upper()]
             rows = cls.parse_rows(text, tr_type)
         except ValueError as e:
             return False
@@ -37,12 +41,13 @@ class JournalParser:
         for row in text.split('\n'):
             match = re.fullmatch(r'(?P<name>[\w\s]+)\s(?P<repeats>[\d/]+)/?\s?(?P<comments>.+)?', row)
             if not match:
+                logging.warning(f'Прервана операция парсинга: {text}')
                 return []
             repeats = match['repeats'].strip('/').split('/')
             repeats = tuple(map(int, repeats))
             exercise = Exercise(name=match['name'], repeats=repeats)
             comments = match['comments']
-            rows.append(Row(content=[exercise], comments=comments))
+            rows.append(Row(content=(exercise, ), comments=comments))
 
         return rows
 
@@ -59,9 +64,10 @@ class JournalParser:
                 except ValueError:
                     comments = elm
             if not routes:
+                logging.warning(f'Прервана операция парсинга: {text}')
                 return []
 
-            rows.append(Row(content=routes, comments=comments))
+            rows.append(Row(content=tuple(routes), comments=comments))
 
         return rows
 

@@ -3,6 +3,7 @@ import logging
 from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
 
 from app.lexic.ru import MAIN_MENU_MSG, JOURNAL
 from app.services.services import UserService
@@ -46,7 +47,9 @@ async def undefined_message(
 
 @undefined_router.callback_query()
 async def undefined_cback(
-    cback: CallbackQuery
+    cback: CallbackQuery,
+    state: FSMContext
 ) -> None:
+    user_state = await state.get_state()
     await cback.answer(text='undefined callback!')
-    logger.warning(f'Undefined callback: {cback.data}')
+    logger.warning(f'Undefined callback: {cback.data}; state: {user_state}')
