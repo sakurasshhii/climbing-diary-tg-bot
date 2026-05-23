@@ -1,9 +1,10 @@
 import logging
 
 from aiogram import Router
-from aiogram.filters import Command, CommandStart
-from aiogram.types import Message, CallbackQuery
+from aiogram.filters import Command, CommandStart, StateFilter
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import default_state
 
 from app.lexic.ru import MAIN_MENU_MSG, JOURNAL
 from app.services.services import UserService
@@ -37,6 +38,18 @@ async def process_help_command(
         logger.info(f'Получена информация из БД:\n{user}')
     await message.answer(MAIN_MENU_MSG['/help'])
 
+# /cancel
+@commands_router.message(Command('cancel'), ~StateFilter(default_state))
+async def cancel_processing(
+        message: Message, state: FSMContext) -> None:
+    user_state = await state.get_state()
+    logging.info(f'Пользователь прервал операцию на состоянии: {user_state}')
+    await state.clear()
+    await message.answer(
+        MAIN_MENU_MSG['/cancel'],
+        reply_markup=ReplyKeyboardRemove()
+    )
+
 # undefined messages
 @undefined_router.message()
 async def undefined_message(
@@ -45,6 +58,7 @@ async def undefined_message(
     await message.answer(text='undefined message!')
     logger.warning(f'Undefined message: {message.text}')
 
+# undefined callback
 @undefined_router.callback_query()
 async def undefined_cback(
     cback: CallbackQuery,

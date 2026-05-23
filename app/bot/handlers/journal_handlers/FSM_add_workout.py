@@ -34,14 +34,14 @@ from app.bot.states.fsm import FSMFillWorkout, FSMWorkoutData, FSMWorkoutDataCom
 from app.services.services import UserService, JournalService
 from app.domain.enums import TrainingType, TrainingCategory
 from app.bot.handlers import exceptions as exc
+from app.lexic.ru import JOURNAL
 from app.bot.keyboards.journal_keyboards import (
     date_kboard, train_type_kboard, wrk_write_kboard,
     gym_train_kboard, climb_train_kboard
 )
-from app.lexic.ru import JOURNAL, MAIN_MENU_MSG
 
 logger = logging.getLogger(__name__)
-journal_router = Router()
+workout_router = Router()
 
 
 ########################## functions ##########################################
@@ -58,25 +58,12 @@ async def set_date_state(
         reply_markup=train_type_kboard
     )
 
-############################ cancel ##########################################
-
-@journal_router.message(Command('cancel'), ~StateFilter(default_state))
-async def cancel_processing(
-        message: Message, state: FSMContext) -> None:
-    user_state = await state.get_state()
-    logging.info(f'Пользователь прервал операцию на состоянии: {user_state}')
-    await state.clear()
-    await message.answer(
-        MAIN_MENU_MSG['/cancel'],
-        reply_markup=ReplyKeyboardRemove()
-    )
-
 ############################# fill form ######################################
 '''
 /add_workout
 Start FSM process of colleting workout data & update database.
 '''
-@journal_router.message(Command('add_workout'), StateFilter(default_state))
+@workout_router.message(Command('add_workout'), StateFilter(default_state))
 async def process_add_workout_command(
         message: Message, state: FSMContext,
         user_service: UserService,
@@ -109,7 +96,7 @@ async def process_add_workout_command(
 
 ############################# add a date #####################################
 
-@journal_router.callback_query(
+@workout_router.callback_query(
         StateFilter(FSMFillWorkout.add_date),
         F.data.in_(['today', 'yesterday']))
 async def process_add_date_press(
@@ -125,7 +112,7 @@ async def process_add_date_press(
 
     await set_date_state(state=state, date=date, message=message)
 
-@journal_router.callback_query(
+@workout_router.callback_query(
         StateFilter(FSMFillWorkout.add_date),
         F.data.in_(['other_date']))
 async def process_add_date_press_other(
@@ -138,7 +125,7 @@ async def process_add_date_press_other(
         JOURNAL['fsm_other_date'],
         reply_markup=ReplyKeyboardRemove())
 
-@journal_router.message(
+@workout_router.message(
         StateFilter(FSMFillWorkout.add_date),
         F.text.regexp(r'^\d{4}-\d{2}-\d{2}$'))               # add date filter
 async def process_add_date_other(
@@ -153,7 +140,7 @@ async def process_add_date_other(
     else:
         await set_date_state(state=state, date=date, message=message)
 
-@journal_router.message(
+@workout_router.message(
         StateFilter(FSMFillWorkout.add_date),
         F.text)
 async def process_add_date_other_error(
@@ -164,7 +151,7 @@ async def process_add_date_other_error(
 
 ############################# add training type ########################
 
-@journal_router.callback_query(
+@workout_router.callback_query(
         StateFilter(FSMFillWorkout.add_train_type),
         F.data.in_(['climbing', 'gym']))
 async def process_add_train_type(
@@ -187,7 +174,7 @@ async def process_add_train_type(
                 f'Trainig category [cback] not founded: {cback.data}'
             )
 
-@journal_router.callback_query(
+@workout_router.callback_query(
     StateFilter(FSMFillWorkout.add_train_type),
     F.data.in_(['boulder', 'lead', 'SFP', 'GPP']))
 async def process_add_train_subtype(
@@ -215,7 +202,7 @@ async def process_add_train_subtype(
 
 ############################# add training content ########################
 
-@journal_router.message(StateFilter(FSMFillWorkout.add_train_content), F.text)
+@workout_router.message(StateFilter(FSMFillWorkout.add_train_content), F.text)
 async def process_add_train_content(
         message: Message, state: FSMContext) -> None:
     '''
@@ -246,7 +233,7 @@ async def process_add_train_content(
 
 ############################# add comment #################################
 
-@journal_router.message(StateFilter(FSMFillWorkout.add_comment), F.text)
+@workout_router.message(StateFilter(FSMFillWorkout.add_comment), F.text)
 async def process_add_train_comment(
         message: Message, state: FSMContext) -> None:
     '''
@@ -262,7 +249,7 @@ async def process_add_train_comment(
 
 ############################# add to DB ####################################
 
-@journal_router.callback_query(
+@workout_router.callback_query(
         StateFilter(FSMFillWorkout.check),
         F.data.in_(['correct']))
 async def process_check_workout(
@@ -284,20 +271,3 @@ async def process_check_workout(
     await state.clear()
 
     logger.info(f'Собранная информация state.get_data(): {data}')
-
-############################# get from DB ####################################
-
-@journal_router.message(Command('my_journals'))
-async def process_my_journals(
-    message: Message,
-    journal_service: JournalService
-) -> None:
-    '''
-    Showing user's journals from DB
-    '''
-    message = assure_message_from_user_id(message)
-    tg_id = message.from_user.id # type: ignore
-    journals = await journal_service.get_journals(tg_id)
-    await message.answer(
-        text='\n'.join(str(j) for j in journals)
-    )
