@@ -2,9 +2,9 @@ import logging
 
 from aiogram import Router
 from aiogram.filters import Command, CommandStart, StateFilter
-from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 
 from app.lexic.ru import MAIN_MENU_MSG, JOURNAL
 from app.services.services import UserService

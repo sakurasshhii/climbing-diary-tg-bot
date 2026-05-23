@@ -7,10 +7,10 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.bot.handlers import routers
+from app.bot.keyboards.set_menu import set_main_menu
 from app.bot.middlewares import ServicesMiddleware
 from app.config.config import Config
 from app.infrastructure.database import Database, create_tables
-from app.bot.keyboards.set_menu import set_main_menu
 
 logger = logging.getLogger(__name__)
 

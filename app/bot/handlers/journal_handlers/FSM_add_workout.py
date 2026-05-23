@@ -30,16 +30,16 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from typing import cast
 
 from app.bot.handlers.journal_handlers.validators import assure_message_from_user_id, assure_callback_message
-from app.bot.states.fsm import FSMFillWorkout, FSMWorkoutData, FSMWorkoutDataComplete
-from app.services.services import UserService, JournalService
-from app.domain.enums import TrainingType, TrainingCategory
 from app.bot.handlers import exceptions as exc
-from app.lexic.ru import JOURNAL
 from app.bot.keyboards.journal_keyboards import (
     date_kboard, train_type_kboard, wrk_write_kboard,
-    gym_train_kboard, climb_train_kboard
+    train_kboard
 )
-
+from app.domain.enums import TrainingType, TrainingCategory
+from app.bot.states.fsm import FSMFillWorkout, FSMWorkoutData, FSMWorkoutDataComplete
+from app.lexic.ru import JOURNAL, JOURNAL_categories
+from app.services.services import UserService, JournalService
+ 
 logger = logging.getLogger(__name__)
 workout_router = Router()
 
@@ -161,18 +161,16 @@ async def process_add_train_type(
     '''
     await cback.answer()
     message = assure_callback_message(cback)
-    cback_data = cback.data or ''
-    await state.update_data(training_category=TrainingCategory[cback_data.upper()])
 
-    match cback.data:
-        case 'climbing':
-            await message.edit_reply_markup(reply_markup=climb_train_kboard)
-        case 'gym':
-            await message.edit_reply_markup(reply_markup=gym_train_kboard)
-        case _:
-            raise exc.JournalError(
-                f'Trainig category [cback] not founded: {cback.data}'
-            )
+    try:
+        cback_data = cback.data or ''
+        training_cat = TrainingCategory[cback_data.upper()]
+    except KeyError as e:
+        logger.error(f'Invalid TrainigCategory from cback: {cback.data}')
+        raise e
+    else:
+        await state.update_data(training_category=training_cat)
+        await message.edit_reply_markup(reply_markup=train_kboard[training_cat])
 
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.add_train_type),
@@ -187,18 +185,14 @@ async def process_add_train_subtype(
     await state.update_data(training_type=TrainingType[cback_data.upper()])
     data: FSMWorkoutData = cast(FSMWorkoutData, await state.get_data())
 
-    match data.get('training_category', None):
-        case TrainingCategory.CLIMBING:
-            await message.answer(JOURNAL['fsm_add_content_climb'])
-            await message.answer(JOURNAL['fsm_add_content_climb_ex'])
-        case TrainingCategory.GYM:
-            await message.answer(JOURNAL['fsm_add_content_gym'])
-        case _:
-            raise exc.JournalError(
-                f'Trainig category [state_data] not founded: {data.get('training_category', None)}'
-            )
-
-    await state.set_state(FSMFillWorkout.add_train_content)
+    try:
+        training_cat = data.get('training_category', None)
+    except KeyError as e:
+        logger.error(f'TrainingCategory not found in state.data')
+        raise e
+    else:
+        await message.answer(JOURNAL_categories[training_cat]['fsm_add_content'])
+        await state.set_state(FSMFillWorkout.add_train_content)
 
 ############################# add training content ########################
 
@@ -219,9 +213,10 @@ async def process_add_train_content(
         training_cat=data['training_category']
     )
 
-    logger.info(f'user message: {message.text}')
-    logger.info(f'is valid: {is_valid}')
-    logger.info(f"training_cat={data['training_category']}")
+    logger.info(f'user message: {message.text}'\
+                f'is valid: {is_valid}'\
+                f"training_cat={data['training_category']}"
+    )
 
     if not is_valid:
         await message.answer(JOURNAL['error_invalid_sets'])
@@ -271,3 +266,20 @@ async def process_check_workout(
     await state.clear()
 
     logger.info(f'Собранная информация state.get_data(): {data}')
+
+@workout_router.callback_query(
+        StateFilter(FSMFillWorkout.check),
+        F.data.in_(['incorrect']))
+async def process_check_workout_incorrect(
+        cback: CallbackQuery, state: FSMContext,
+        journal_service: JournalService) -> None:
+    ########### доработать! добавить редактирование данных
+
+    await cback.answer()
+    message = assure_callback_message(cback)
+
+    await message.answer(
+        text=JOURNAL['fsm_check_incorrect'],
+        reply_markup=ReplyKeyboardRemove()
+    )
+    await state.clear()
