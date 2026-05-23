@@ -4,10 +4,10 @@
 __all__ = [
     'INSERT_USER', 'INSERT_JOURNAL', 'INSERT_WORKOUT',
     'INSERT_TRAIN', 'INSERT_ROW', 'INSERT_EXERCISE', 'INSERT_ROUTE',
-    'GET_USER_BY_TG_ID', 'GET_JOURNAL', 'GET_USER_ID',
+    'GET_USER_BY_TG_ID', 'GET_JOURNAL', 'GET_JOURNALS', 'GET_USER_ID',
     'GET_EXERCISES_BY_ROWS', 'GET_ROUTES_BY_ROWS', 'GET_ROWS_BY_TRAINS',
     'GET_TRAINS_BY_WORKOUT', 'GET_WORKOUT_BY_DATE', 'GET_WORKOUT_BY_ID',
-    'UPDATE_JOURNAL_PERIOD', 'UPDATE_JOURNAL_PERIOD_END'
+    'UPDATE_JOURNAL_PERIOD',
 ]
 
 ################## table creation ###################
@@ -153,6 +153,12 @@ FROM journals
 WHERE id = ?;
 """
 
+GET_JOURNALS = """
+SELECT *
+FROM journals
+WHERE user_id = ?;
+"""
+
 GET_WORKOUT_BY_ID = """
 SELECT *
 FROM workouts
@@ -192,13 +198,6 @@ WHERE row_id IN ({});
 ############################## update data #################################
 
 UPDATE_JOURNAL_PERIOD = """
-UPDATE journals
-SET
-    period_start = ?,
-    period_end = ?
-WHERE id = ?;
-"""
-UPDATE_JOURNAL_PERIOD_END = """
 UPDATE journals
 SET
     period_start = ?,

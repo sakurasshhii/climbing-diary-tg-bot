@@ -1,9 +1,13 @@
 import datetime as dt
 
 from app.infrastructure.database.repo import UserRepository, JournalRepository
-from app.domain.models import Journal, Workout, User, ClimbTrain, GymTrain
+from app.domain.models import (
+    Journal, Workout, User, ClimbTrain, GymTrain,
+    JournalInfo
+)
 from app.domain.exceptions import UserNotFoundError
 from app.domain.enums import TrainingType, TrainingCategory
+from app.bot.states.fsm import FSMWorkoutDataComplete
 from .parser import JournalParser
 
 
@@ -51,38 +55,38 @@ class JournalService:
             raise UserNotFoundError(tg_id)
         await self.journal_repo.add_journal(user_id=user['id'], comments=comments)
 
+    # async def add_workout(
+    #         self, tg_id: int, journal_no: int,
+    #         workout_date: dt.date, training_category: str,
+    #         training_type: str, content: str, comments: str) -> None:
     async def add_workout(
-            self, tg_id: int, journal_no: int,
-            workout_date: dt.date, training_category: str,
-            training_type: str, content: str, comments: str) -> None:
+            self, tg_id: int, data: FSMWorkoutDataComplete) -> None:
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
 
         workout = JournalParser.parse_workout(
-            workout_date=workout_date,
-            training_category=TrainingCategory[training_category.upper()],
-            training_type=TrainingType[training_type.upper()],
-            content=content,
-            comments=comments
+            workout_date=data['workout_date'],
+            training_category=data['training_category'],
+            training_type=data['training_type'],
+            content=data['content'],
+            comments=data['comments']
         )
         await self.journal_repo.add_workout(
-            journal_id=journal_no,
+            journal_id=data['journal_no'],
             workout=workout
         )
+
+    async def get_journals(self, tg_id: int) -> tuple[JournalInfo, ...]:
+        user = await self.user_repo.get_user_by_tg(tg_id)
+        if not user:
+            raise UserNotFoundError(tg_id)
+        journals = await self.journal_repo.get_journals(user['id'])
+        return tuple(JournalInfo(**j) for j in journals)
 
     async def get_workout_by_date(self, date: dt.date) -> Workout | None:
         return await self.journal_repo.get_workout_by_date(date)
 
-    # async def get_journals(self, user_id: int):
-    #     ################# to do! 
-    #     '''
-    #     На доработке:
-    #     Сейчас ф-я возвращает номера и комментарии всех существующих журналов пользователя.
-    #     '''
-    #     return await self.journal_repo.get_journals(user_id=user_id)
-    #     return Journal()
-
     @staticmethod
-    def training_sets_validation(text: str, training_cat: str) -> bool:
+    def training_sets_validation(text: str, training_cat: TrainingCategory) -> bool:
         return bool(JournalParser.is_valid_rows(text, training_category=training_cat))

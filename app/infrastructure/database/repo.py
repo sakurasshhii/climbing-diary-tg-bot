@@ -1,11 +1,14 @@
-import aiosqlite
 import json
 import datetime as dt
+import logging
+
 from collections import defaultdict
 from .database import Database, Transaction
 from app.domain.models import Workout, ClimbTrain, GymTrain, Exercise, Route, Row
 from app.domain.enums import TrainingCategory, TrainingType
 from .sql_models import *
+
+logger = logging.getLogger(__name__)
 
 
 class UserRepository:
@@ -36,10 +39,14 @@ class JournalRepository:
     def __init__(self, db: Database) -> None:
         self.db = db
 
-    async def add_journal(self, user_id: int, comments:str = '', period: tuple[dt.date] | None = None) -> None:
+    async def add_journal(
+            self, user_id: int,
+            comments:str = '',
+            period: tuple[dt.date | None, dt.date | None] = (None, None)
+            ) -> None:
         await self.db.execute(
             INSERT_JOURNAL,
-            (user_id, comments)
+            (user_id, comments, *period)
             )
 
     async def get_journal(self, journal_no: int) -> dict | None:
@@ -50,6 +57,13 @@ class JournalRepository:
 
         return dict(journal) if journal else None
 
+    async def get_journals(self, user_id) -> tuple[dict, ...]:
+        journals = await self.db.fetchall(
+            GET_JOURNALS,
+            (user_id, )
+        )
+        return tuple(dict(j) for j in journals) if journals else tuple()
+
     async def add_workout(self,
             journal_id: int,
             workout: Workout
@@ -59,15 +73,12 @@ class JournalRepository:
                 GET_JOURNAL,
                 (journal_id, )
             )
-            if journal and not journal['period_start']:
+            if journal:
+                logger.info(f'dates in journal no.{journal_id}: {journal['period_start'], journal['period_end']}')
+                st, en = (dt.date.fromisoformat(journal[t]) or workout.date for t in ['period_start', 'period_end'])
                 await db.execute(
                     UPDATE_JOURNAL_PERIOD,
-                    (workout.date, workout.date)
-                )
-            elif journal:
-                await db.execute(
-                    UPDATE_JOURNAL_PERIOD_END,
-                    (workout.date, )
+                    (min(st, workout.date), max(en, workout.date), journal_id)
                 )
             else:
                 return

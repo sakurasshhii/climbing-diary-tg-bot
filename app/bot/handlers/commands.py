@@ -51,5 +51,6 @@ async def undefined_cback(
     state: FSMContext
 ) -> None:
     user_state = await state.get_state()
-    await cback.answer(text='undefined callback!')
+    if cback.message:
+        await cback.message.answer(text='undefined callback!')
     logger.warning(f'Undefined callback: {cback.data}; state: {user_state}')

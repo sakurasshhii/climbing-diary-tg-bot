@@ -14,10 +14,9 @@ class JournalParser:
     Workout parser to get info from user message.
     '''
     @classmethod
-    def is_valid_rows(cls, text: str, training_category: str) -> bool | Sequence[Row]:
+    def is_valid_rows(cls, text: str, training_category: TrainingCategory) -> bool | Sequence[Row]:
         try:
-            tr_type = TrainingCategory[training_category.upper()]
-            rows = cls.parse_rows(text, tr_type)
+            rows = cls.parse_rows(text, training_category)
         except ValueError as e:
             return False
         else:

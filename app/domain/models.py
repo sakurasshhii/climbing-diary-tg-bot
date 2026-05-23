@@ -60,6 +60,17 @@ class User:
 ################################## Journal #################################
 
 @dataclass
+class JournalInfo:
+    '''
+    Use to present info about user's journals from DB.
+    '''
+    id: int
+    user_id: int
+    comments: str
+    period_start: dt.date | None
+    period_end: dt.date | None
+
+@dataclass
 class Journal:
     '''
     Great class contains multiple workout sessions.
