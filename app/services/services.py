@@ -23,7 +23,8 @@ class UserService:
             id = req['id'],
             tg_id = req['tg_id'],
             username = req['username'],
-            last_journal = req['last_journal'])
+            last_journal = req['last_journal']
+        )
         return user
 
     async def get_user_assured(self, tg_id: int, username='') -> User:
@@ -50,15 +51,6 @@ class JournalService:
             raise UserNotFoundError(tg_id)
         await self.journal_repo.add_journal(user_id=user['id'], comments=comments)
 
-    async def get_journals(self, user_id: int):
-        ################# to do! 
-        '''
-        На доработке:
-        Сейчас ф-я возвращает номера и комментарии всех существующих журналов пользователя.
-        '''
-        return await self.journal_repo.get_journals(user_id=user_id)
-        return Journal()
-
     async def add_workout(
             self, tg_id: int, journal_no: int,
             workout_date: dt.date, training_category: str,
@@ -79,7 +71,18 @@ class JournalService:
             workout=workout
         )
 
+    async def get_workout_by_date(self, date: dt.date) -> Workout | None:
+        return await self.journal_repo.get_workout_by_date(date)
+
+    # async def get_journals(self, user_id: int):
+    #     ################# to do! 
+    #     '''
+    #     На доработке:
+    #     Сейчас ф-я возвращает номера и комментарии всех существующих журналов пользователя.
+    #     '''
+    #     return await self.journal_repo.get_journals(user_id=user_id)
+    #     return Journal()
+
     @staticmethod
     def training_sets_validation(text: str, training_cat: str) -> bool:
         return bool(JournalParser.is_valid_rows(text, training_category=training_cat))
-    

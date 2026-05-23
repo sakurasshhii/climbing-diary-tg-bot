@@ -1,6 +1,14 @@
 '''
 Набор SQL-команд для общения с БД
 '''
+__all__ = [
+    'INSERT_USER', 'INSERT_JOURNAL', 'INSERT_WORKOUT',
+    'INSERT_TRAIN', 'INSERT_ROW', 'INSERT_EXERCISE', 'INSERT_ROUTE',
+    'GET_USER_BY_TG_ID', 'GET_JOURNAL', 'GET_USER_ID',
+    'GET_EXERCISES_BY_ROWS', 'GET_ROUTES_BY_ROWS', 'GET_ROWS_BY_TRAINS',
+    'GET_TRAINS_BY_WORKOUT', 'GET_WORKOUT_BY_DATE', 'GET_WORKOUT_BY_ID',
+    'UPDATE_JOURNAL_PERIOD', 'UPDATE_JOURNAL_PERIOD_END'
+]
 
 ################## table creation ###################
 
@@ -16,6 +24,8 @@ CREATE TABLE IF NOT EXISTS journals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     comments TEXT,
+    period_start DATE,
+    period_end DATE,
 
     FOREIGN KEY (user_id)
         REFERENCES users(id)
@@ -91,7 +101,7 @@ CREATE TABLE IF NOT EXISTS exercises (
 """
 
 ################ user repo operations ################
-################ add data ###########################
+################ insert data #########################
 
 INSERT_USER = """
 INSERT OR IGNORE INTO users (tg_id, username)
@@ -99,8 +109,8 @@ VALUES (?, ?);
 """
 
 INSERT_JOURNAL = """
-INSERT INTO journals (user_id, comments)
-VALUES (?, ?);
+INSERT INTO journals (user_id, comments, period_start, period_end)
+VALUES (?, ?, ?, ?);
 """
 
 INSERT_WORKOUT = """
@@ -140,5 +150,58 @@ GET_USER_ID = "SELECT id FROM users WHERE tg_id = ?"
 GET_JOURNAL = """
 SELECT *
 FROM journals
+WHERE id = ?;
+"""
+
+GET_WORKOUT_BY_ID = """
+SELECT *
+FROM workouts
+WHERE id = ?;
+"""
+
+GET_WORKOUT_BY_DATE = """
+SELECT *
+FROM workouts
+WHERE workout_date = ?;
+"""
+
+GET_TRAINS_BY_WORKOUT = """
+SELECT *
+FROM trains
+WHERE workout_id = ?;
+"""
+
+GET_ROWS_BY_TRAINS = """
+SELECT *
+FROM rows
+WHERE train_id IN ({});
+"""
+
+GET_ROUTES_BY_ROWS = """
+SELECT *
+FROM routes
+WHERE row_id IN ({});
+"""
+
+GET_EXERCISES_BY_ROWS = """
+SELECT *
+FROM exercises
+WHERE row_id IN ({});
+"""
+
+############################## update data #################################
+
+UPDATE_JOURNAL_PERIOD = """
+UPDATE journals
+SET
+    period_start = ?,
+    period_end = ?
+WHERE id = ?;
+"""
+UPDATE_JOURNAL_PERIOD_END = """
+UPDATE journals
+SET
+    period_start = ?,
+    period_end = ?
 WHERE id = ?;
 """
