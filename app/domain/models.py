@@ -40,18 +40,22 @@ exercise_sets — вместо хранения повторений в json / �
 '''
 from __future__ import annotations
 
-import re
+from __future__ import annotations
+
 import datetime as dt
+import re
 
 from dataclasses import dataclass, field
 from typing import Sequence
-from .enums import TrainingType, TrainingCategory
+
+from .enums import TrainingCategory, TrainingType
 
 
 ################################## User ####################################
 
 @dataclass
 class User:
+    """User presentation from DB table «users»."""
     id: int
     tg_id: int
     username: str
@@ -61,27 +65,25 @@ class User:
 
 @dataclass
 class JournalInfo:
-    '''
-    Use to present info about user's journals from DB.
-    '''
+    """Info object representing user's journal from DB."""
     id: int
     user_id: int
     comments: str
     period_start: dt.date | None
     period_end: dt.date | None
 
+
 @dataclass
 class Journal:
-    '''
-    Great class contains multiple workout sessions.
-    '''
+    """Container of multiple workout sessions."""
+
     content: list[Workout] = field(default_factory=list)
-    comments: str = ''
+    comments: str = ""
 
     def __post_init__(self):
         if self.content:
             if not all(isinstance(x, Workout) for x in self.content):
-                raise TypeError('Journal must contain Workout objects only.')
+                raise TypeError("Journal must contain Workout objects only.")
             self.content.sort(key=lambda x: x.date)
 
     @property
@@ -91,19 +93,26 @@ class Journal:
         return (None, None)
 
     def add_workout(self, workout: Workout):
-        if isinstance (workout, Workout):
-            self.content.append(workout)
-            if len(self) >=2 and self.content[-2].date > workout.date:
-                self.content.sort(key=lambda x: x.date)
-        else:
-            raise TypeError('Journal could contain Workout objects only.')
+        if not isinstance (workout, Workout):
+            raise TypeError("Journal could contain Workout objects only.")
+
+        self.content.append(workout)
+        if len(self) >=2 and self.content[-2].date > workout.date:
+            self.content.sort(key=lambda x: x.date)
 
     def __str__(self) -> str:
-        if not self.content:
-            return 'Empty journal.'
-        date = f'[{"-".join(map(str, self.period))}]\n'
-        about = f'About this journal: {self.comments}\n' if self.comments else ''
-        return date + about + '\n ——— \n'.join(x.__str__() for x in self.content)
+        date_st, date_en = (
+            date.strftime("%d.%m.%Y") if date else "..."
+            for date in self.period
+        )
+        date: str = "Дневник {}-{}".format(date_st, date_en)
+        comments: str = f"Комментарии: {self.comments}" if self.comments else ""
+        if self.content:
+            content: str = "\n———\n".join(str(x) for x in self.content)
+        else:
+            content: str = "Нет тренировок."
+
+        return "\n".join((date, comments, content))
     
     def __len__(self):
         return len(self.content)
@@ -111,43 +120,43 @@ class Journal:
 
 @dataclass
 class Workout:
-    '''
-    One workout session a day.
-    It could contain several training types inside.
-    '''
+    """
+    One workout session.
+    Could contain several training types.
+    """
+
     date: dt.date
     content: list[Train] = field(default_factory=list)
-    comments: str = ''
+    comments: str = ""
 
     def add_train(self, train: Train):
-        if isinstance(train, Train):
-            self.content.append(train)
-        else:
-            raise TypeError('Workout could contain Train objects only.')
+        if not isinstance(train, Train):
+            raise TypeError("Workout could contain Train objects only.")
+        self.content.append(train)
     
     @property
     def get_content(self) -> Sequence[Train]:
         return tuple(self.content)
 
     def __str__(self) -> str:
-        if not self.content:
-            return f'Date: {self.date.isoformat()}; no trainings yet.'
-        return '\n'.join([
-            f'Date: {self.date.isoformat()};',
-            *(x.__str__() for x in self.content)
-        ])
+        date = "{}".format(self.date.strftime("%d.%m.%Y"))
+        content = "\n".join(str(x) for x in self.content)
+        comments = f"Комментарии: {self.comments}" if self.comments else ""
+        
+        return "\n".join((date, content, comments))
 
 
 @dataclass
 class Train:
-    '''
-    Group of the same type of physical activity.
-    Used as parent for climbing/not climbing.
-    '''
+    """
+    Group of the same physical activity.
+    Parent class for climbing / gym training.
+    """
+
     training_category: TrainingCategory = field(init=False)
     type: TrainingType
     rows: list[Row]
-    comments: str = ''
+    comments: str = ""
 
     @property
     def get_rows(self) -> Sequence[Row]:
@@ -157,16 +166,13 @@ class Train:
         if isinstance(row, Row):
             self.rows.append(row)
         else:
-            raise TypeError('Train could contain Row objects only.')
+            raise TypeError("Train could contain Row objects only.")
 
     def __str__(self) -> str:
-        if not self.rows:
-            return f'{self.type.name}: empty training.'
+        content: str = "\n".join((str(r) for r in self.rows))
+        comments = f"; {self.comments}" if self.comments else ""
 
-        comments = f'\nComments: {self.comments}' if self.comments else ''
-        rows = '\n'.join(str(x) for x in self.rows)
-
-        return f'{self.type.name}:\n{rows}{comments}'
+        return "\n".join((self.type.value + comments, content))
 
 
 @dataclass
@@ -181,44 +187,34 @@ class GymTrain(Train):
 
 @dataclass(frozen=True)
 class Row:
-    '''
-    Container used to group activity in one training set.
-    '''
+    """Container grouping one training set."""
+
     content: tuple[Route | Exercise, ...]
-    comments: str = ''
+    comments: str = ""
 
     def __post_init__(self) -> None:
-        if not len(self.content):
-            raise ValueError('Empty set is not avaiable.')
+        if not self.content:
+            raise ValueError("Empty set is not avaiable.")
     
-    @property
     def get_content(self) -> Sequence[Route | Exercise]:
         return tuple(self.content)
 
     def __str__(self) -> str:
-        content = ' | '.join((x.__str__() for x in self.content))
-        comments = f' ({self.comments})' if self.comments else ''
+        content = '|'.join((str(x) for x in self.content))
+        comments = f" — {self.comments}" if self.comments else ""
         return content + comments
 
 ################## inner layer of composition: Route & Exercise ##################
 
 @dataclass(frozen=True)
 class Route:
-    '''
-    Route rate via French/Fontainebleau system.
-    '''
-    grade: str
-    falls: int = 0
-    flash: bool = False
+    """Route rate via French/Fontainebleau system."""
+
+    grade: str              # French grade from 5a to 9b+
+    falls: int = 0          # Count of falls in route before top
+    flash: bool = False     # Flash flag
 
     def __post_init__(self) -> None:
-        '''
-        Route format: {grade}{:falls}{f if flash}
-
-        grade — French grade from 5a to 9b+
-        falls — count of falls in route before top
-        flash — if route was climbed first time and without falls
-        '''
         if not re.fullmatch(r'\d[abcABC]\+?', self.grade):
             raise ValueError(f'Invalid grade: {self.grade}')
         if not isinstance(self.falls, int) or self.falls < 0:
@@ -227,16 +223,20 @@ class Route:
             raise ValueError(f'Invalid flash flag: {self.flash}')
 
     def __str__(self) -> str:
-        return f"{self.grade}{'(fall)' if self.falls else ''}{'(flash)' if self.flash else ''}"
+        info = []
+        info.append(f"falls: {self.falls}") if self.falls else None
+        info.append("flash") if self.flash else None
+        info = ", ".join(info)
 
+        return self.grade + f"({info})" if info else self.grade
 
 @dataclass(frozen=True)
 class Exercise:
-    '''
-    Exercise in set of GPP/SFP training
-    '''
+    """Exercise in set of GPP/SFP training."""
+
     name: str
     repeats: tuple[int, ...]
+
     def __post_init__(self) -> None:
         if not self.name:
             raise ValueError('Invalid input: empty name')
@@ -244,4 +244,6 @@ class Exercise:
             raise ValueError(f'Invalid repeats: {self.repeats}')
 
     def __str__(self) -> str:
-        return f"{self.name};{'|'.join(map(str, self.repeats))}"
+        repeats = "/".join((str(n) for n in self.repeats))
+
+        return f"{self.name}: {repeats}"
