@@ -44,34 +44,101 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+import logging
 
+import app.domain.exceptions as exc
 from dataclasses import dataclass, field
 from typing import Sequence
 
 from .enums import TrainingCategory, TrainingType
 
+logger = logging.getLogger(__name__)
 
-################################## User ####################################
+
+# ———————————————————————————— dataclasses as DB tables ——————————————————————————————————
 
 @dataclass
 class User:
-    """User presentation from DB table «users»."""
+    """User representation from DB table «users»."""
     id: int
     tg_id: int
     username: str
     last_journal: int
 
-################################## Journal #################################
 
 @dataclass
-class JournalInfo:
-    """Info object representing user's journal from DB."""
+class DBJournal:
+    """Journal representation from DB table «journals»."""
     id: int
     user_id: int
     comments: str
     period_start: dt.date | None
     period_end: dt.date | None
 
+    def __post_init__(self):
+        def convert_date(date):
+            return dt.date.fromisoformat(date) if date else None
+        
+        self.period_start = convert_date(self.period_start)
+        self.period_end = convert_date(self.period_end)
+
+    @property
+    def dates(self):
+        dates = tuple(map(
+            lambda d: d.strftime("%d.%m.%Y") if d else "...",
+            [self.period_start, self.period_end]
+        ))
+        return "{} - {}".format(*dates)
+
+
+@dataclass
+class DBWorkout:
+    """Workout representation from DB table «workouts»."""
+
+    id: int
+    journal_id: int
+    workout_date: dt.date
+    comments: str
+
+    def __post_init__(self):
+        if isinstance(self.workout_date, str):
+           self.workout_date = dt.date.fromisoformat(self.workout_date)
+
+
+@dataclass
+class DBTrain:
+    """Train representation from DB table «trains»"""
+
+    id: int
+    workout_id: int
+    category: TrainingCategory
+    type: TrainingType
+    comments: str
+
+    def __post_init__(self):
+        try:
+            if isinstance(self.id, str):
+                self.id = int(self.id)
+            if isinstance(self.workout_id, str):
+                self.workout_id = int(self.workout_id)
+            if isinstance(self.category, str):
+                self.category = TrainingCategory[self.category.upper()]
+            if isinstance(self.type, str):
+                self.type = TrainingType[self.type.upper()]
+        except ValueError, KeyError:
+            logger.error("Invalid data for DBTrain object.")
+
+
+@dataclass
+class DBRow:
+    """Row representation from DB table «rows»"""
+
+    id: int
+    train_id: int
+    row_order: int
+    comments: str
+
+# ———————————————————————————— journal structure ————————————————————————————————————————
 
 @dataclass
 class Journal:
@@ -129,11 +196,17 @@ class Workout:
     content: list[Train] = field(default_factory=list)
     comments: str = ""
 
+    def __post_init__(self):
+        if not isinstance(self.date, dt.date):
+            raise exc.MissedDateError(self.date)
+        if self.comments == "-":
+            self.comments = ""
+
     def add_train(self, train: Train):
         if not isinstance(train, Train):
             raise TypeError("Workout could contain Train objects only.")
         self.content.append(train)
-    
+
     @property
     def get_content(self) -> Sequence[Train]:
         return tuple(self.content)
@@ -142,8 +215,9 @@ class Workout:
         date = "{}".format(self.date.strftime("%d.%m.%Y"))
         content = "\n".join(str(x) for x in self.content)
         comments = f"Комментарии: {self.comments}" if self.comments else ""
-        
-        return "\n".join((date, content, comments))
+        data = [x for x in (date, content, comments) if x]
+
+        return "\n".join(data)
 
 
 @dataclass
@@ -158,6 +232,10 @@ class Train:
     rows: list[Row]
     comments: str = ""
 
+    def __post_init__(self):
+        if self.comments == "-":
+            self.comments = ""
+
     @property
     def get_rows(self) -> Sequence[Row]:
         return tuple(self.rows)
@@ -170,9 +248,10 @@ class Train:
 
     def __str__(self) -> str:
         content: str = "\n".join((str(r) for r in self.rows))
-        comments = f"; {self.comments}" if self.comments else ""
+        comments = f"Комментарии: {self.comments}" if self.comments else ""
+        data = [x for x in (self.type.value, content, comments) if x]
 
-        return "\n".join((self.type.value + comments, content))
+        return "\n".join(data)
 
 
 @dataclass
@@ -204,15 +283,14 @@ class Row:
         comments = f" — {self.comments}" if self.comments else ""
         return content + comments
 
-################## inner layer of composition: Route & Exercise ##################
 
 @dataclass(frozen=True)
 class Route:
     """Route rate via French/Fontainebleau system."""
 
-    grade: str              # French grade from 5a to 9b+
-    falls: int = 0          # Count of falls in route before top
-    flash: bool = False     # Flash flag
+    grade: str                      # French grade from 5a to 9b+
+    falls: int = 0                  # Count of falls in route before top
+    flash: bool = False             # Flash flag
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r'\d[abcABC]\+?', self.grade):
@@ -246,4 +324,4 @@ class Exercise:
     def __str__(self) -> str:
         repeats = "/".join((str(n) for n in self.repeats))
 
-        return f"{self.name}: {repeats}"
+        return f"{self.name} {repeats}"

@@ -5,15 +5,17 @@ MAIN_MENU: dict[str, str] = {
     '/start': 'Начать',
     '/help': 'Информация',
     '/add_workout' : 'Добавить тренировку',
-    '/cancel': 'Отмена'
+    '/my_journal': 'Посмотреть дневник',
+    '/cancel': 'Отмена',
 }
 MAIN_MENU_MSG: dict[str, str] = {
     '/start': 'will be soon...',
     '/help': 'will  be soon...',
     '/add_workout': 'will be soon...',
-    '/cancel': 'Вы прервали операцию.'
+    '/my_journal': '',
+    '/cancel': 'Вы прервали операцию.',
 }
-JOURNAL: dict[str, str] = {
+FSM_ADD_TRAIN: dict[str, str] = {
 'error_journal_0': '''
 Похоже, у вас еще нет записанных тренировок.
 
@@ -22,8 +24,8 @@ JOURNAL: dict[str, str] = {
 Для более подробной информации отправьте /help.
 ''',
 'error_invalid_date': 'Отправленное вами сообщение не может быть считано как корректная дата. Проверьте формат и попробуйте еще раз.',
-'error_invalid_sets': \
-'''Возникла проблема при чтении записи. Проверьте формат введенных данных и попробуйте еще раз.
+'error_invalid_sets': '''
+Возникла проблема при чтении записи. Проверьте формат введенных данных и попробуйте еще раз.
 
 Вскоре появится возможность добавления тренировки через кнопки, ждите обновление!
 ''',
@@ -37,7 +39,7 @@ JOURNAL: dict[str, str] = {
 'fsm_check_incorrect': 'Добавление тренировки отменено. В будущем можно будет исправить неверно записанные данные, а пока предлагаем внести тренировку еще раз.'
 }
 
-JOURNAL_categories: dict[TrainingCategory, dict[str, str]] = {
+FSM_ADD_TRAIN_CAT: dict[TrainingCategory, dict[str, str]] = {
     TrainingCategory.CLIMBING: {
 'fsm_add_content': '''
 Для записи тренировки укажите пройденные трассы через "/", каждый подход на новой строке.
@@ -62,4 +64,7 @@ JOURNAL_categories: dict[TrainingCategory, dict[str, str]] = {
 '''
     }
 }
-### второй вариант записи трасс — с попытками на трассу
+
+CHECK_JOURNAL: dict[str, str] = {
+"select_journal": "Выберите тренировочный дневник:",
+}

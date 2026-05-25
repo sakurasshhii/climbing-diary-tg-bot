@@ -3,7 +3,7 @@ WORKOUT_DATE: dict[str, str] = {
     'yesterday': 'Вчера',
     'other_date': 'Другой день...'
 }
-TRAINING_TYPE: dict[str, str] = {
+TRAIN_CATEGORY: dict[str, str] = {
     'climbing': 'Тренировка по скалолазанию',
     'gym': 'ОФП или СФП'
 }

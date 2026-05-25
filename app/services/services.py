@@ -1,13 +1,15 @@
+import asyncio
 import datetime as dt
+from collections.abc import Iterable
 
 from app.infrastructure.database.repo import UserRepository, JournalRepository
 from app.domain.models import (
-    Journal, Workout, User, ClimbTrain, GymTrain,
-    JournalInfo
+    Journal, Workout, User, ClimbTrain, GymTrain, Row,
+    DBJournal, DBWorkout, DBTrain,
 )
 from app.domain.exceptions import UserNotFoundError
 from app.domain.enums import TrainingType, TrainingCategory
-from app.bot.states.fsm import FSMWorkoutDataComplete
+from app.bot.states.add_workout import FSMWorkoutDataComplete
 from .parser import JournalParser
 
 
@@ -44,8 +46,9 @@ class UserService:
 
 class JournalService:
     def __init__(
-            self, user_repo: UserRepository,
-            journal_repo: JournalRepository) -> None:
+        self, user_repo: UserRepository,
+        journal_repo: JournalRepository
+    ) -> None:
         self.user_repo = user_repo
         self.journal_repo = journal_repo
 
@@ -55,12 +58,11 @@ class JournalService:
             raise UserNotFoundError(tg_id)
         await self.journal_repo.add_journal(user_id=user['id'], comments=comments)
 
-    # async def add_workout(
-    #         self, tg_id: int, journal_no: int,
-    #         workout_date: dt.date, training_category: str,
-    #         training_type: str, content: str, comments: str) -> None:
     async def add_workout(
-            self, tg_id: int, data: FSMWorkoutDataComplete) -> None:
+        self,
+        tg_id: int,
+        data: FSMWorkoutDataComplete
+    ) -> None:
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
@@ -77,15 +79,72 @@ class JournalService:
             workout=workout
         )
 
-    async def get_journals(self, tg_id: int) -> tuple[JournalInfo, ...]:
+    async def get_journals(self, tg_id: int) -> Iterable[DBJournal]:
+        """Возвращает все journals пользователя по его id."""
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
-        journals = await self.journal_repo.get_journals(user['id'])
-        return tuple(JournalInfo(**j) for j in journals)
+        return await self.journal_repo.get_journals(user['id'])
 
-    async def get_workout_by_date(self, date: dt.date) -> Workout | None:
-        return await self.journal_repo.get_workout_by_date(date)
+    async def get_journal(self, journal_id: int) -> Journal:
+        """Возвращает Journal пользователя."""
+        journal_raw = await self.journal_repo.get_journal(journal_id)
+        if journal_raw is None:
+            raise ValueError("Journal not found.")
+
+        raw_workouts = await self.journal_repo.get_workouts(journal_raw.id)
+        workouts = await asyncio.gather(*[self.get_workout(w) for w in raw_workouts])
+
+        return Journal(content=workouts, comments=journal_raw.comments)
+
+    async def get_workout(self, work_raw: DBWorkout) -> Workout:
+        """Возвращает Workout пользователя по id."""
+        raw_trains: Iterable[DBTrain] = await self.journal_repo.get_trains(work_raw.id)
+
+        workout = Workout(
+            date=work_raw.workout_date,
+            comments=work_raw.comments
+        )
+
+        for tr_raw in raw_trains:
+            rows_raw = await self.journal_repo.get_rows(tr_raw)
+            match tr_raw.category:
+                case TrainingCategory.CLIMBING:
+                    content_all = await self.journal_repo.get_routes(rows_raw)
+                    rows = [
+                        Row(
+                            content=tuple(content_all[j]),
+                            comments=rows_raw[i].comments
+                        )
+                        for i, j in enumerate(content_all)
+                    ]
+                    train = ClimbTrain(
+                        type=tr_raw.type,
+                        rows=rows,
+                        comments=tr_raw.comments
+                    )
+                case TrainingCategory.GYM:
+                    content_all = await self.journal_repo.get_exercises(rows_raw)
+                    rows = [
+                        Row(
+                            content=tuple(content_all[j]),
+                            comments=rows_raw[i].comments
+                        )
+                        for i, j in enumerate(content_all)
+                    ]
+                    train = GymTrain(
+                        type=tr_raw.type,
+                        rows=rows,
+                        comments=tr_raw.comments
+                    )
+                case _:
+                    raise ValueError(f"Undefined TrainingCategory: {tr_raw.category}")
+
+            workout.add_train(
+                train
+            )
+
+        return workout
 
     @staticmethod
     def training_sets_validation(text: str, training_cat: TrainingCategory) -> bool:

@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 
-from app.lexic.ru import MAIN_MENU_MSG, JOURNAL
+from app.lexic.ru import MAIN_MENU_MSG, FSM_ADD_TRAIN
 from app.services.services import UserService
 
 logger = logging.getLogger(__name__)

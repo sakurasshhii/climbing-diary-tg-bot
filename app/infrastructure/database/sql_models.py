@@ -1,14 +1,6 @@
 '''
 Набор SQL-команд для общения с БД
 '''
-__all__ = [
-    'INSERT_USER', 'INSERT_JOURNAL', 'INSERT_WORKOUT',
-    'INSERT_TRAIN', 'INSERT_ROW', 'INSERT_EXERCISE', 'INSERT_ROUTE',
-    'GET_USER_BY_TG_ID', 'GET_JOURNAL', 'GET_JOURNALS', 'GET_USER_ID',
-    'GET_EXERCISES_BY_ROWS', 'GET_ROUTES_BY_ROWS', 'GET_ROWS_BY_TRAINS',
-    'GET_TRAINS_BY_WORKOUT', 'GET_WORKOUT_BY_DATE', 'GET_WORKOUT_BY_ID',
-    'UPDATE_JOURNAL_PERIOD',
-]
 
 ################## table creation ###################
 
@@ -159,7 +151,13 @@ FROM journals
 WHERE user_id = ?;
 """
 
-GET_WORKOUT_BY_ID = """
+GET_WORKOUTS = """
+SELECT *
+FROM workouts
+WHERE journal_id = ?;
+"""
+
+GET_WORKOUT = """
 SELECT *
 FROM workouts
 WHERE id = ?;
