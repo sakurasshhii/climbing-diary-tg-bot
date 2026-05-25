@@ -14,7 +14,7 @@ from app.domain.enums import TrainingType, TrainingCategory
 
 builder = ReplyKeyboardBuilder()
 
-################################ date #################################
+################################ FSM date #################################
 date_buttons = [
     InlineKeyboardButton(text=text, callback_data=cback)
     for cback, text in WORKOUT_DATE.items()
@@ -25,7 +25,7 @@ date_kboard = InlineKeyboardMarkup(
     one_time_keyboard=True
 )
 
-################################ train type #################################
+################################ FSM train type #################################
 train_type_buttons = [
     [InlineKeyboardButton(text=text, callback_data=cback)]
     for cback, text in TRAINING_TYPE.items()
@@ -39,23 +39,22 @@ climb_train_buttons = [
     [InlineKeyboardButton(text=text, callback_data=cback)]
     for cback, text in TRAIN_TYPE_CLIMB.items()
 ]
-climb_train_kboard = InlineKeyboardMarkup(
-    inline_keyboard=climb_train_buttons,
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
 gym_train_buttons = [
     [InlineKeyboardButton(text=text, callback_data=cback)]
     for cback, text in TRAIN_TYPE_GYM.items()
 ]
-gym_train_kboard = InlineKeyboardMarkup(
-    inline_keyboard=gym_train_buttons,
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
+
 train_kboard: dict[TrainingCategory, InlineKeyboardMarkup] = {
-    TrainingCategory.CLIMBING: climb_train_kboard,
-    TrainingCategory.GYM: gym_train_kboard
+    TrainingCategory.CLIMBING: InlineKeyboardMarkup(
+        inline_keyboard=climb_train_buttons,
+        resize_keyboard=True,
+        one_time_keyboard=True
+    ),
+    TrainingCategory.GYM: InlineKeyboardMarkup(
+        inline_keyboard=gym_train_buttons,
+        resize_keyboard=True,
+        one_time_keyboard=True
+    ),
 }
 
 ################################ check workout #################################

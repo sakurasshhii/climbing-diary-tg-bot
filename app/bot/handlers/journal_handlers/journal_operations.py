@@ -14,8 +14,7 @@ from app.services.services import UserService, JournalService
 from app.domain.enums import TrainingType, TrainingCategory
 from app.bot.handlers import exceptions as exc
 from app.bot.keyboards.journal_keyboards import (
-    date_kboard, train_type_kboard, wrk_write_kboard,
-    gym_train_kboard, climb_train_kboard
+    date_kboard, train_type_kboard, wrk_write_kboard
 )
 from app.lexic.ru import JOURNAL, MAIN_MENU_MSG
 

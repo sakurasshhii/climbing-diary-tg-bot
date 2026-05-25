@@ -105,6 +105,8 @@ async def process_add_date_press(
     await cback.answer()
     message = assure_callback_message(cback)
 
+    await message.edit_reply_markup()
+
     if cback.data == 'today':
         date = dt.date.today()
     else:
@@ -120,6 +122,8 @@ async def process_add_date_press_other(
 
     await cback.answer()
     message = assure_callback_message(cback)
+
+    await message.edit_reply_markup()
 
     await message.answer(
         JOURNAL['fsm_other_date'],
@@ -180,6 +184,8 @@ async def process_add_train_subtype(
 
     await cback.answer()
     message = assure_callback_message(cback)
+
+    await message.edit_reply_markup()
 
     cback_data = cback.data or ''
     await state.update_data(training_type=TrainingType[cback_data.upper()])
@@ -256,6 +262,8 @@ async def process_check_workout(
     await cback.answer()
     message = assure_callback_message(cback)
 
+    await message.edit_reply_markup()
+
     tg_id = cback.from_user.id
     data: FSMWorkoutDataComplete = cast(FSMWorkoutDataComplete, await state.get_data())
 
@@ -277,6 +285,8 @@ async def process_check_workout_incorrect(
 
     await cback.answer()
     message = assure_callback_message(cback)
+
+    await message.edit_reply_markup()
 
     await message.answer(
         text=JOURNAL['fsm_check_incorrect'],

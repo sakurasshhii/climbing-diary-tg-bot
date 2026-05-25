@@ -30,52 +30,32 @@ class JournalParser:
     def parse_rows(cls, text: str, training_category: TrainingCategory) -> Sequence[Row]:
         """Extract gym/climbing training rows from user's input."""
 
-        if training_category == TrainingCategory.CLIMBING:
-            return cls.parse_rows_climbing(text)
-        elif training_category == TrainingCategory.GYM:
-            return cls.parse_rows_gym(text)
-        else:
-            raise TypeError(f"Incorrect trainig category: {training_category}")
+        match training_category:
+            case TrainingCategory.CLIMBING:
+                return cls._parse_rows_climbing(text)
+            case TrainingCategory.GYM:
+                return cls._parse_rows_gym(text)
+            case _:
+                raise TypeError(f"Incorrect trainig category: {training_category}")
 
     @classmethod
-    def parse_rows_gym(cls, text: str) -> Sequence[Row]:
-        rows: list[Row] = []
+    def parse_workout(cls, workout_date: dt.date, training_category: TrainingCategory,
+            training_type: TrainingType, content: str, comments: str) -> Workout:
+        """Create Workout from FSM data"""
+        rows = list(cls.parse_rows(content, training_category=training_category))
 
-        for row in text.splitlines():
-            match = re.fullmatch(r"(?P<name>[\w\s]+)\s(?P<repeats>[\d/]+)/?\s?(?P<comments>.+)?", row)
-            if not match:
-                logging.warning(f"Прервана операция парсинга: {text}")
-                return []
+        match training_category:
+            case TrainingCategory.CLIMBING:
+                train = ClimbTrain(
+                    type=training_type, rows=rows, comments=comments)
+            case TrainingCategory.GYM:
+                train = GymTrain(
+                    type=training_type, rows=rows, comments=comments)
+            case _:
+                raise ValueError(f'Incorrect trainig category: {training_category}')
 
-            repeats = tuple(map(int, match["repeats"].strip("/").split("/")))
-            exercise = Exercise(name=match["name"], repeats=repeats)
-            rows.append(
-                Row(content=(exercise, ), comments=match["comments"] or "")
-            )
-
-        return rows
-
-    @classmethod
-    def parse_rows_climbing(cls, text: str) -> Sequence[Row]:
-        rows: list[Row] = []
-
-        for line in text.splitlines():
-            routes, comments = [], ""
-
-            for elm in line.split("/"):
-                try:
-                    routes.append(JournalParser.get_route(elm))
-                except ValueError:
-                    comments = elm
-            if not routes:
-                logging.warning(f"Прервана операция парсинга: {text}")
-                return []
-
-            rows.append(
-                Row(content=tuple(routes), comments=comments)
-            )
-
-        return rows
+        return Workout(
+            date=workout_date, content=[train])
 
     @classmethod
     def get_route(cls, text: str) -> Route:
@@ -96,3 +76,43 @@ class JournalParser:
             falls = 0
 
         return Route(grade=grade, falls=int(falls), flash=flash)
+
+    @classmethod
+    def _parse_rows_gym(cls, text: str) -> Sequence[Row]:
+        rows: list[Row] = []
+
+        for row in text.splitlines():
+            match = re.fullmatch(r"(?P<name>[\w\s]+)\s(?P<repeats>[\d/]+)/?\s?(?P<comments>.+)?", row)
+            if not match:
+                logging.warning(f"Прервана операция парсинга: {text}")
+                return []
+
+            repeats = tuple(map(int, match["repeats"].strip("/").split("/")))
+            exercise = Exercise(name=match["name"], repeats=repeats)
+            rows.append(
+                Row(content=(exercise, ), comments=match["comments"] or "")
+            )
+
+        return rows
+
+    @classmethod
+    def _parse_rows_climbing(cls, text: str) -> Sequence[Row]:
+        rows: list[Row] = []
+
+        for line in text.splitlines():
+            routes, comments = [], ""
+
+            for elm in line.split("/"):
+                try:
+                    routes.append(JournalParser.get_route(elm))
+                except ValueError:
+                    comments = elm
+            if not routes:
+                logging.warning(f"Прервана операция парсинга: {text}")
+                return []
+
+            rows.append(
+                Row(content=tuple(routes), comments=comments)
+            )
+
+        return rows
