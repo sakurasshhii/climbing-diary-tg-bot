@@ -1,5 +1,4 @@
-"""
-Module contains handlers to add train(workout).
+"""Module contains handlers to add train(workout).
 
 ———————————————— FSM schema ————————————————
 1. select a journal
@@ -48,7 +47,7 @@ from app.bot.states.add_workout import (
 from app.domain.enums import TrainingCategory, TrainingType
 from app.lexic.ru import FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT
 from app.services.services import JournalService, UserService
- 
+
 logger = logging.getLogger(__name__)
 workout_router = Router()
 
@@ -57,33 +56,33 @@ workout_router = Router()
 async def set_date_state(
     date: dt.date,
     state: FSMContext,
-    message: Message
+    message: Message,
 ) -> None:
     await state.update_data(workout_date=date)
     await state.set_state(FSMFillWorkout.add_train_type)
     await message.answer(
-        text=FSM_ADD_TRAIN['fsm_add_train_type'],
-        reply_markup=train_cat_kboard
+        text=FSM_ADD_TRAIN["fsm_add_train_type"],
+        reply_markup=train_cat_kboard,
     )
 
 # ———————————————————————————— FSM —————————————————————————————————————
 # ———————————————————————————— 1.journal ———————————————————————————————
 # to do!!!!!!!: добавить выбор журнала перед записью тренировки
-@workout_router.message(Command('add_workout'), StateFilter(default_state))
+@workout_router.message(Command("add_workout"), StateFilter(default_state))
 async def process_add_workout_command(
     message: Message,
     state: FSMContext,
     user_service: UserService,
-    journal_service: JournalService
+    journal_service: JournalService,
 ) -> None:
-    """
-    Default way to add workout.
+    """Add workout in last edited journal.
+
     The last one journal will be selected by default.
     If there are no journal — it creates automatically.
     """
     message = assure_message_from_user_id(message)
 
-    user_id = message.from_user.id # type: ignore
+    user_id = message.from_user.id  # type: ignore[union-attr]
     user = await user_service.get_user_assured(user_id)
 
     if user.last_journal == 0:
@@ -104,19 +103,15 @@ async def process_add_workout_command(
     StateFilter(FSMFillWorkout.add_date),
     F.data.in_(["today", "yesterday"]),
 )
-async def process_add_date_press(
-    cback: CallbackQuery,
-    state: FSMContext,
-) -> None:
+async def process_add_date_press(cback: CallbackQuery, state: FSMContext) -> None:
     await cback.answer()
     message = assure_callback_message(cback)
 
     await message.edit_reply_markup()
 
-    if cback.data == "today":
-        date = dt.date.today()
-    else:
-        date = dt.date.today() - dt.timedelta(days=1)
+    date = dt.datetime.now(tz=dt.UTC).date()
+    if cback.data == "yesterday":
+        date -= dt.timedelta(days=1)
 
     await set_date_state(state=state, date=date, message=message)
 
@@ -124,10 +119,7 @@ async def process_add_date_press(
     StateFilter(FSMFillWorkout.add_date),
     F.data.in_(["other_date"]),
 )
-async def process_add_date_press_other(
-    cback: CallbackQuery,
-    state: FSMContext,
-) -> None:
+async def process_add_date_press_other(cback: CallbackQuery) -> None:
     await cback.answer()
     message = assure_callback_message(cback)
 
@@ -140,10 +132,7 @@ async def process_add_date_press_other(
 @workout_router.message(
     StateFilter(FSMFillWorkout.add_date),
     F.text.regexp(r"^\d{4}-\d{2}-\d{2}$")) # to do!!! add date filter
-async def process_add_date_other(
-    message: Message, 
-    state: FSMContext
-) -> None:
+async def process_add_date_other(message: Message, state: FSMContext) -> None:
     message = assure_message_from_user_id(message)
 
     try:
@@ -165,20 +154,18 @@ async def process_add_date_other_error(
 # ———————————————————————————— 3.category ———————————————————————————————
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.add_train_type),
-    F.data.in_(["climbing", "gym"]))
-async def process_add_train_cat(
-    cback: CallbackQuery,
-    state: FSMContext
-) -> None:
+    F.data.in_(["climbing", "gym"]),
+)
+async def process_add_train_cat(cback: CallbackQuery, state: FSMContext) -> None:
     """Step 3. Add the training type."""
     await cback.answer()
     message = assure_callback_message(cback)
 
     try:
-        cback_data = cback.data or ''
+        cback_data = cback.data or ""
         training_cat = TrainingCategory[cback_data.upper()]
     except KeyError:
-        logger.error(f"Invalid TrainigCategory from cback: {cback.data}")
+        logger.exception(f"Invalid TrainigCategory from cback: {cback.data}")
         raise
 
     await state.update_data(training_category=training_cat)
@@ -187,12 +174,9 @@ async def process_add_train_cat(
 # ———————————————————————————— 4.type ———————————————————————————————
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.add_train_type),
-    F.data.in_(["boulder", "lead", "SFP", "GPP"]))
-async def process_add_train_type(
-    cback: CallbackQuery,
-    state: FSMContext
-) -> None:
-
+    F.data.in_(["boulder", "lead", "SFP", "GPP"]),
+)
+async def process_add_train_type(cback: CallbackQuery, state: FSMContext) -> None:
     await cback.answer()
     message = assure_callback_message(cback)
 
@@ -200,60 +184,48 @@ async def process_add_train_type(
 
     cback_data: str = cback.data or ""
     await state.update_data(training_type=TrainingType[cback_data.upper()])
-    data: FSMWorkoutData = cast(FSMWorkoutData, await state.get_data())
+    data: FSMWorkoutData = cast("FSMWorkoutData", await state.get_data())
+
     training_cat: TrainingCategory = data.get("training_category", None)
-
     if training_cat is None:
-        raise exc.JournalError("TrainingCategory missed in FSM data")
+        raise exc.JournalError(text="TrainingCategory missed in FSM data")
 
-    await message.answer(FSM_ADD_TRAIN_CAT[training_cat]["fsm_add_content"])
     await state.set_state(FSMFillWorkout.add_train_content)
+    await message.answer(FSM_ADD_TRAIN_CAT[training_cat]["fsm_add_content"])
 
 # ———————————————————————————— 5.content ———————————————————————————————
 @workout_router.message(StateFilter(FSMFillWorkout.add_train_content), F.text)
-async def process_add_train_content(
-    message: Message,
-    state: FSMContext
-) -> None:
+async def process_add_train_content(message: Message, state: FSMContext) -> None:
     """Step 4. Add training content."""
-
     message = assure_message_from_user_id(message)
 
-    data: FSMWorkoutData = cast(FSMWorkoutData, await state.get_data())
+    data: FSMWorkoutData = cast("FSMWorkoutData", await state.get_data())
     training_cat: TrainingCategory = data.get("training_category", None)
 
     if training_cat is None:
-        raise exc.JournalError("TrainingCategory missed in FSM data")
+        raise exc.JournalError(text="TrainingCategory missed in FSM data")
 
     is_valid = JournalService.training_sets_validation(
         text=message.text or "",
-        training_cat=training_cat
-    )
-    logger.info(
-        "User message=%s | valid=%s | training_cat=%s",
-        message.text,
-        is_valid,
-        training_cat,
+        training_cat=training_cat,
     )
     if not is_valid:
-        await message.answer(FSM_ADD_TRAIN['error_invalid_sets'])
+        await message.answer(FSM_ADD_TRAIN["error_invalid_sets"])
         return
 
     await state.update_data(content=message.text)
-    await message.answer(FSM_ADD_TRAIN['fsm_add_comment'])
     await state.set_state(FSMFillWorkout.add_comment)
+
+    await message.answer(FSM_ADD_TRAIN["fsm_add_comment"])
 
 # ———————————————————————————— 6.comment ———————————————————————————————
 @workout_router.message(StateFilter(FSMFillWorkout.add_comment), F.text)
-async def process_add_train_comment(
-    message: Message,
-    state: FSMContext
-) -> None:
+async def process_add_train_comment(message: Message, state: FSMContext) -> None:
     """Step 5. Add comment to the train."""
-
     await state.update_data(comments=message.text)
     await state.set_state(FSMFillWorkout.check)
-    data: FSMWorkoutData = cast(FSMWorkoutData, await state.get_data())
+    data: FSMWorkoutData = cast("FSMWorkoutData", await state.get_data())
+
     await message.answer(
         text=FSM_ADD_TRAIN["fsm_to_check"].format(data),
         reply_markup=check_kboard)
@@ -261,21 +233,24 @@ async def process_add_train_comment(
 # ———————————————————————————— 7.check ———————————————————————————————
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.check),
-    F.data.in_(["correct"])
+    F.data.in_(["correct"]),
 )
-async def process_check_workout(
-    cback: CallbackQuery, state: FSMContext,
-    journal_service: JournalService
+async def process_check_correct(
+    cback: CallbackQuery,
+    state: FSMContext,
+    journal_service: JournalService,
 ) -> None:
     """Step 6. Check & push into DB."""
-
     await cback.answer()
     message = assure_callback_message(cback)
 
     await message.edit_reply_markup()
 
     tg_id = cback.from_user.id
-    data: FSMWorkoutDataComplete = cast(FSMWorkoutDataComplete, await state.get_data())
+    data: FSMWorkoutDataComplete = cast(
+        "FSMWorkoutDataComplete",
+        await state.get_data(),
+    )
 
     ############## to do!
     # Исправить на добавление train: на случай, если это вторая тренировка за день
@@ -289,21 +264,17 @@ async def process_check_workout(
 
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.check),
-    F.data.in_(["incorrect"])
+    F.data.in_(["incorrect"]),
 )
-async def process_check_workout_incorrect(
-    cback: CallbackQuery,
-    state: FSMContext
-) -> None:
+async def process_check_incorrect(cback: CallbackQuery, state: FSMContext) -> None:
     ########### to do! добавить редактирование данных
-
     await cback.answer()
     message = assure_callback_message(cback)
 
     await message.edit_reply_markup()
 
+    await state.clear()
     await message.answer(
         text=FSM_ADD_TRAIN["fsm_check_incorrect"],
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=ReplyKeyboardRemove(),
     )
-    await state.clear()

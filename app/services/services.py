@@ -1,5 +1,4 @@
 import asyncio
-import datetime as dt
 from collections.abc import Iterable
 
 from app.infrastructure.database.repo import UserRepository, JournalRepository
@@ -45,6 +44,11 @@ class UserService:
         return await self.get_user(tg_id) # type: ignore
 
 class JournalService:
+    TRAIN_CLASS = {
+        TrainingCategory.CLIMBING: ClimbTrain,
+        TrainingCategory.GYM: GymTrain,
+    }
+
     def __init__(
         self, user_repo: UserRepository,
         journal_repo: JournalRepository
@@ -86,20 +90,24 @@ class JournalService:
             raise UserNotFoundError(tg_id)
         return await self.journal_repo.get_journals(user['id'])
 
-    async def get_journal(self, journal_id: int) -> Journal:
+    async def get_complete_journal(self, journal_id: int) -> Journal:
         """Возвращает Journal пользователя."""
         journal_raw = await self.journal_repo.get_journal(journal_id)
         if journal_raw is None:
             raise ValueError("Journal not found.")
 
         raw_workouts = await self.journal_repo.get_workouts(journal_raw.id)
-        workouts = await asyncio.gather(*[self.get_workout(w) for w in raw_workouts])
+        workouts = await asyncio.gather(*(self.get_workout(w) for w in raw_workouts))
 
         return Journal(content=workouts, comments=journal_raw.comments)
 
     async def get_workout(self, work_raw: DBWorkout) -> Workout:
         """Возвращает Workout пользователя по id."""
         raw_trains: Iterable[DBTrain] = await self.journal_repo.get_trains(work_raw.id)
+        getter_from_tr_cat = {
+            TrainingCategory.CLIMBING: self.journal_repo.get_routes,
+            TrainingCategory.GYM: self.journal_repo.get_exercises,
+        }
 
         workout = Workout(
             date=work_raw.workout_date,
@@ -108,40 +116,20 @@ class JournalService:
 
         for tr_raw in raw_trains:
             rows_raw = await self.journal_repo.get_rows(tr_raw)
-            match tr_raw.category:
-                case TrainingCategory.CLIMBING:
-                    content_all = await self.journal_repo.get_routes(rows_raw)
-                    rows = [
-                        Row(
-                            content=tuple(content_all[j]),
-                            comments=rows_raw[i].comments
-                        )
-                        for i, j in enumerate(content_all)
-                    ]
-                    train = ClimbTrain(
-                        type=tr_raw.type,
-                        rows=rows,
-                        comments=tr_raw.comments
-                    )
-                case TrainingCategory.GYM:
-                    content_all = await self.journal_repo.get_exercises(rows_raw)
-                    rows = [
-                        Row(
-                            content=tuple(content_all[j]),
-                            comments=rows_raw[i].comments
-                        )
-                        for i, j in enumerate(content_all)
-                    ]
-                    train = GymTrain(
-                        type=tr_raw.type,
-                        rows=rows,
-                        comments=tr_raw.comments
-                    )
-                case _:
-                    raise ValueError(f"Undefined TrainingCategory: {tr_raw.category}")
-
+            content_all = await getter_from_tr_cat[tr_raw.category](rows_raw)
+            rows = [
+                Row(
+                    content=tuple(content_all[j]),
+                    comments=rows_raw[i].comments
+                )
+                for i, j in enumerate(content_all)
+            ]
             workout.add_train(
-                train
+                self.TRAIN_CLASS[tr_raw.category](
+                    type=tr_raw.type,
+                    rows=rows,
+                    comments=tr_raw.comments
+                )
             )
 
         return workout

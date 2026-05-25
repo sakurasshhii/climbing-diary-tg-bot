@@ -5,9 +5,7 @@ Get information from DB.
 1. select a journal
 2. print / send file
 """
-import datetime as dt
 import logging
-from typing import cast
 from collections.abc import Iterable
 
 from aiogram import F, Router
@@ -24,7 +22,7 @@ from app.bot.handlers.journal_handlers.validators import (
 from app.bot.keyboards.journal_keyboards import (
     get_journals_kb
 )
-from app.bot.states.get_journal import FSMGetJournal, FSMJournalInfoComplete
+from app.bot.states.get_journal import FSMGetJournal
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal, Journal
 from app.lexic.ru import CHECK_JOURNAL
@@ -69,8 +67,9 @@ async def process_show_journal(
     if cback.data is None:
         raise ValueError
 
-    journal: Journal = await journal_service.get_journal(int(cback.data))
+    journal: Journal = await journal_service.get_complete_journal(int(cback.data))
 
+    await state.clear()
     await message.answer(
         text=str(journal),
         reply_markup=ReplyKeyboardRemove()

@@ -5,7 +5,6 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 
-from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import (
     ClimbTrain,
     Exercise,
