@@ -58,24 +58,34 @@ class JournalParser:
             date=workout_date, content=[train])
 
     @classmethod
-    def get_route(cls, text: str) -> Route:
-        """Use to extract Route from user's message."""
+    def get_route(cls, raw_route: str) -> Route:
+        """Use to extract Route from user's message.
 
-        match = re.fullmatch(r'(?P<grade>\d[abcабс]\+?)(?P<falls>\s\d)?', text)
+        Format:
+        6a - просто 6а
+        6a+ - просто 6а+
+        6a f - 6а флэш
+        6a rp - 6а ред поинт
+        6a: - 6а со срывом (количество не указано)
+        6a:5 - 6а с пятью срывами
+        """
+
+        match = re.fullmatch(
+            r'(?P<grade>[4-9][abcабс]\+?)(?P<falls>:(?P<falls_no>\d+)?)?(?P<flash>\sf)?(?P<rp>\srp)?',
+            raw_route
+        )
         if not match or match["grade"] is None:
-            raise ValueError(f"Incorrent climbing grade: {text}")
+            raise ValueError(f"Incorrent climbing grade: {raw_route}")
 
-        flash = False
-        grade, falls = [m.strip() if m else False for m in match.groups()]
-        grade = str(grade)
-        for old, new in zip("абс", "abc"):
-            grade = grade.replace(old, new)
-        if falls == "0":
-            flash = True
-        elif not falls:
-            falls = 0
+        grade = match["grade"]
+        falls = bool(match["falls"])
+        if n := match["falls_no"]:
+            falls = int(n)
+        flash = bool(match["flash"])
+        rp = bool(match["rp"])
 
-        return Route(grade=grade, falls=int(falls), flash=flash)
+        return Route(grade=grade, falls=falls, flash=flash, red_point=rp)
+
 
     @classmethod
     def _parse_rows_gym(cls, text: str) -> Sequence[Row]:

@@ -302,16 +302,21 @@ class Route:
     """Route rate via French/Fontainebleau system."""
 
     grade: str                      # French grade from 5a to 9b+
-    falls: int = 0                  # Count of falls in route before top
+    falls: int | bool = False       # Count of falls in route before top
     flash: bool = False             # Flash flag
+    red_point: bool = False
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r'\d[abcABC]\+?', self.grade):
             raise ValueError(f'Invalid grade: {self.grade}')
-        if not isinstance(self.falls, int) or self.falls < 0:
+        if not isinstance(self.falls, (int, bool)) or self.falls < 0 or self.falls > 50:
             raise ValueError(f'Invalid falls count: {self.falls}')
         if not isinstance(self.flash, bool) or self.flash and self.falls:
             raise ValueError(f'Invalid flash flag: {self.flash}')
+        if not isinstance(self.red_point, bool) or \
+            self.red_point and self.falls or \
+            self.red_point and self.flash:
+            raise ValueError(f"Red point flag failed")
 
     def __str__(self) -> str:
         info = []
