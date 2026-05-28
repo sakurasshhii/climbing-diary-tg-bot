@@ -276,7 +276,7 @@ class GymTrain(Train):
 class Row:
     """Container grouping one training set."""
 
-    content: tuple[Route | Exercise, ...]
+    content: Sequence[Route | Exercise]
     comments: str = ""
     training_category: TrainingCategory = field(init=False)
 
@@ -287,14 +287,8 @@ class Row:
             object.__setattr__(self, "training_category", TrainingCategory.CLIMBING)
         if isinstance(self.content[0], Exercise):
             object.__setattr__(self, "training_category", TrainingCategory.GYM)
-    
-    def get_content(self) -> Sequence[Route | Exercise]:
-        return tuple(self.content)
 
-    def __str__(self) -> str:
-        content = '|'.join((str(x) for x in self.content))
-        comments = f" — {self.comments}" if self.comments else ""
-        return content + comments
+        object.__setattr__(self, "content", tuple(self.content))
 
 
 @dataclass(frozen=True)

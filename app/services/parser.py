@@ -20,13 +20,6 @@ class JournalParser:
     """Workout parser to get info from user message."""
 
     @classmethod
-    def is_valid_rows(cls, text: str, training_category: TrainingCategory) -> Sequence[Row] | None:
-        try:
-            return cls.parse_rows(text, training_category)
-        except ValueError as e:
-            return None
-
-    @classmethod
     def parse_rows(cls, text: str, training_category: TrainingCategory) -> Sequence[Row]:
         """Extract gym/climbing training rows from user's input."""
 
@@ -86,22 +79,35 @@ class JournalParser:
 
         return Route(grade=grade, falls=falls, flash=flash, red_point=rp)
 
-
     @classmethod
     def _parse_rows_gym(cls, text: str) -> Sequence[Row]:
+        """Use to extract Row[Exercise] from user's message.
+        
+        name 1 - 1/2/3 - Exercise(name="name", repeats=(1, 2, 3,)) in set
+        cool exercise 2 - 10 - 10 reps of cool exercise
+        """
+
         rows: list[Row] = []
 
         for row in text.splitlines():
-            match = re.fullmatch(r"(?P<name>[\w\s]+)\s(?P<repeats>[\d/]+)/?\s?(?P<comments>.+)?", row)
-            if not match:
+            comments = ""
+
+            data = row.strip().split("-")
+            if not data or len(data) == 1:
                 logging.warning(f"Прервана операция парсинга: {text}")
                 return []
+            
+            if len(data) == 3:
+                comments = data[2].strip()
+            name, reps = map(str.strip, data[:2])
+            reps = tuple(map(int, reps.split("/")))
 
-            repeats = tuple(map(int, match["repeats"].strip("/").split("/")))
-            exercise = Exercise(name=match["name"], repeats=repeats)
-            rows.append(
-                Row(content=(exercise, ), comments=match["comments"] or "")
-            )
+            try:
+                exercise = Exercise(name=name, repeats=reps)
+            except ValueError:
+                return []
+
+            rows.append(Row(content=(exercise, ), comments=comments))
 
         return rows
 
@@ -111,18 +117,23 @@ class JournalParser:
 
         for line in text.splitlines():
             routes, comments = [], ""
+            data = line.split("-")
+            if len(data) > 1:
+                comments = "".join(data[1:]).strip()
 
-            for elm in line.split("/"):
+            raw_routes = data[0].split(",")
+
+            for r in raw_routes:
                 try:
-                    routes.append(JournalParser.get_route(elm))
+                    routes.append(JournalParser.get_route(r.strip()))
                 except ValueError:
-                    comments = elm
-            if not routes:
+                    logging.warning(f"Прервана операция парсинга: {text, r}")
+                    return []
+
+            if not len(routes):
                 logging.warning(f"Прервана операция парсинга: {text}")
                 return []
 
-            rows.append(
-                Row(content=tuple(routes), comments=comments)
-            )
+            rows.append(Row(content=routes, comments=comments))
 
         return rows

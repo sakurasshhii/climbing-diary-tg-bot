@@ -136,4 +136,4 @@ class JournalService:
 
     @staticmethod
     def training_sets_validation(text: str, training_cat: TrainingCategory) -> bool:
-        return bool(JournalParser.is_valid_rows(text, training_category=training_cat))
+        return bool(JournalParser.parse_rows(text, training_category=training_cat))
