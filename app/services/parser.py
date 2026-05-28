@@ -111,18 +111,23 @@ class JournalParser:
 
         for line in text.splitlines():
             routes, comments = [], ""
+            data = line.split("-")
+            if len(data) > 1:
+                comments = "".join(data[1:]).strip()
 
-            for elm in line.split("/"):
+            raw_routes = data[0].split(",")
+
+            for r in raw_routes:
                 try:
-                    routes.append(JournalParser.get_route(elm))
+                    routes.append(JournalParser.get_route(r.strip()))
                 except ValueError:
-                    comments = elm
-            if not routes:
+                    logging.warning(f"Прервана операция парсинга: {text, r}")
+                    return []
+
+            if not len(routes):
                 logging.warning(f"Прервана операция парсинга: {text}")
                 return []
 
-            rows.append(
-                Row(content=tuple(routes), comments=comments)
-            )
+            rows.append(Row(content=routes, comments=comments))
 
         return rows

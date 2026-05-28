@@ -276,7 +276,7 @@ class GymTrain(Train):
 class Row:
     """Container grouping one training set."""
 
-    content: tuple[Route | Exercise, ...]
+    content: Sequence[Route | Exercise]
     comments: str = ""
     training_category: TrainingCategory = field(init=False)
 
