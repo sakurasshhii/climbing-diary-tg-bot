@@ -40,8 +40,6 @@ exercise_sets — вместо хранения повторений в json / �
 '''
 from __future__ import annotations
 
-from __future__ import annotations
-
 import datetime as dt
 import re
 import logging
@@ -153,6 +151,9 @@ class Journal:
                 raise TypeError("Journal must contain Workout objects only.")
             self.content.sort(key=lambda x: x.date)
 
+        if self.comments == "-":
+            self.comments = ""
+
     @property
     def period(self) -> tuple[dt.date | None, dt.date | None]:
         if self.content:
@@ -199,6 +200,7 @@ class Workout:
     def __post_init__(self):
         if not isinstance(self.date, dt.date):
             raise exc.MissedDateError(self.date)
+
         if self.comments == "-":
             self.comments = ""
 
@@ -208,7 +210,7 @@ class Workout:
         self.content.append(train)
 
     @property
-    def get_content(self) -> Sequence[Train]:
+    def get_content(self) -> tuple[Train, ...]:
         return tuple(self.content)
 
     def __str__(self) -> str:
@@ -220,7 +222,7 @@ class Workout:
         return "\n".join(data)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Train:
     """
     Group of the same physical activity.
@@ -229,22 +231,28 @@ class Train:
 
     training_category: TrainingCategory = field(init=False)
     type: TrainingType
-    rows: list[Row]
+    rows: list[Row] = field(default_factory=list)
     comments: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.comments == "-":
-            self.comments = ""
+            object.__setattr__(self, "comments", "")
 
     @property
-    def get_rows(self) -> Sequence[Row]:
+    def get_rows(self) -> tuple[Row, ...]:
         return tuple(self.rows)
 
-    def add_row(self, row: Row):
-        if isinstance(row, Row):
-            self.rows.append(row)
-        else:
-            raise TypeError("Train could contain Row objects only.")
+    def add_row(self, row: Row) -> None:
+        if not isinstance(row, Row):
+            raise TypeError("Train must contain Row objects only.")
+        elif not self.training_category == row.training_category:
+            raise TypeError("Train must contain one trainig type.")
+
+        self.rows.append(row)
+
+    def set_comment(self, val: str) -> None:
+        if len(val) and isinstance(val, str):
+            object.__setattr__(self, "comments", val)
 
     def __str__(self) -> str:
         content: str = "\n".join((str(r) for r in self.rows))
@@ -254,12 +262,12 @@ class Train:
         return "\n".join(data)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ClimbTrain(Train):
     training_category = TrainingCategory.CLIMBING
 
 
-@dataclass
+@dataclass(frozen=True)
 class GymTrain(Train):
     training_category = TrainingCategory.GYM
 
@@ -270,10 +278,15 @@ class Row:
 
     content: tuple[Route | Exercise, ...]
     comments: str = ""
+    training_category: TrainingCategory = field(init=False)
 
     def __post_init__(self) -> None:
         if not self.content:
             raise ValueError("Empty set is not avaiable.")
+        if isinstance(self.content[0], Route):
+            object.__setattr__(self, "training_category", TrainingCategory.CLIMBING)
+        if isinstance(self.content[0], Exercise):
+            object.__setattr__(self, "training_category", TrainingCategory.GYM)
     
     def get_content(self) -> Sequence[Route | Exercise]:
         return tuple(self.content)
