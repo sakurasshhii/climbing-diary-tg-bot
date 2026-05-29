@@ -2,6 +2,8 @@ import pytest
 from app.services.parser import JournalParser
 from app.domain.enums import TrainingCategory
 from app.domain.models import Row, Route, Exercise
+from app.domain.enums import TrainingCategory
+from app.domain.models import Row, Route, Exercise
 
 
 class TestParser:
