@@ -18,33 +18,29 @@ from app.domain.enums import (
     TrainingType
 )
 
-DATE = dt.datetime.now().date()
-
+@pytest.fixture
+def new_date() -> dt.date:
+    return dt.datetime.now().date()
 
 @pytest.fixture
 def route() -> Route:
     return Route(grade='6a', falls=0, flash=False)
 
-
 @pytest.fixture
 def exercise() -> Exercise:
     return Exercise(name='Ex 1', repeats=(1, 2, 3))
-
 
 @pytest.fixture
 def routes(route, n=3) -> Sequence[Route]:
     return (route,) * n
 
-
 @pytest.fixture
 def exercises(exercise, n=3) -> Sequence[Exercise]:
     return (exercise,) * n
 
-
 @pytest.fixture
 def row_routes(routes) -> Row:
     return Row(content=routes)
-
 
 @pytest.fixture
 def row_exercises(exercises) -> Row:
@@ -67,9 +63,9 @@ def train_gym_fill(row_exercises, n=3) -> GymTrain:
     return GymTrain(type=TrainingType.GPP, rows=[row_exercises for _ in range(n)])
 
 @pytest.fixture
-def workout_climb(train_climb_fill) -> Workout:
-    return Workout(date=DATE, content=[train_climb_fill])
+def workout_climb(train_climb_fill, new_date) -> Workout:
+    return Workout(date=new_date, content=[train_climb_fill])
 
 @pytest.fixture
-def workout_gym(train_gym_fill) -> Workout:
-    return Workout(date=DATE, content=[train_gym_fill])
+def workout_gym(train_gym_fill, new_date) -> Workout:
+    return Workout(date=new_date, content=[train_gym_fill])

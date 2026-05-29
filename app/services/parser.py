@@ -28,8 +28,6 @@ class JournalParser:
                 return cls._parse_rows_climbing(text)
             case TrainingCategory.GYM:
                 return cls._parse_rows_gym(text)
-            case _:
-                raise TypeError(f"Incorrect trainig category: {training_category}")
 
     @classmethod
     def parse_workout(cls, workout_date: dt.date, training_category: TrainingCategory,
@@ -44,8 +42,6 @@ class JournalParser:
             case TrainingCategory.GYM:
                 train = GymTrain(
                     type=training_type, rows=rows, comments=comments)
-            case _:
-                raise ValueError(f'Incorrect trainig category: {training_category}')
 
         return Workout(
             date=workout_date, content=[train])
@@ -92,17 +88,17 @@ class JournalParser:
         for row in text.splitlines():
             comments = ""
 
-            data = row.strip().split("-")
-            if not data or len(data) == 1:
+            data = tuple(map(str.strip, row.strip().split("-")))
+            if not data or len(data) <= 1:
                 logging.warning(f"Прервана операция парсинга: {text}")
                 return []
-            
+
             if len(data) == 3:
                 comments = data[2].strip()
             name, reps = map(str.strip, data[:2])
-            reps = tuple(map(int, reps.split("/")))
 
             try:
+                reps = tuple(map(int, reps.split("/")))
                 exercise = Exercise(name=name, repeats=reps)
             except ValueError:
                 return []
@@ -117,22 +113,21 @@ class JournalParser:
 
         for line in text.splitlines():
             routes, comments = [], ""
-            data = line.split("-")
+            data = tuple(map(str.strip, line.split("-")))
+
             if len(data) > 1:
                 comments = "".join(data[1:]).strip()
 
-            raw_routes = data[0].split(",")
-
-            for r in raw_routes:
-                try:
-                    routes.append(JournalParser.get_route(r.strip()))
-                except ValueError:
-                    logging.warning(f"Прервана операция парсинга: {text, r}")
-                    return []
-
-            if not len(routes):
-                logging.warning(f"Прервана операция парсинга: {text}")
-                return []
+            if data and data[0]:
+                raw_r = tuple(map(str.strip, data[0].split(",")))
+                for r in raw_r:
+                    try:
+                        routes.append(JournalParser.get_route(r.strip()))
+                    except ValueError:
+                        logging.warning(f"Прервана операция парсинга: {text, r}")
+                        return []
+            else:
+                continue
 
             rows.append(Row(content=routes, comments=comments))
 

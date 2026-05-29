@@ -1,9 +1,9 @@
 import pytest
 from app.services.parser import JournalParser
-from app.domain.enums import TrainingCategory
+from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import Row, Route, Exercise
 from app.domain.enums import TrainingCategory
-from app.domain.models import Row, Route, Exercise
+from app.domain.models import Row, Route, Exercise, Workout, ClimbTrain, GymTrain
 
 
 class TestParser:
@@ -23,7 +23,7 @@ class TestParser:
             JournalParser.get_route(route)
     
     @pytest.mark.parametrize(
-    "text,training_category,expected",
+    "text,training_cat,expected",
     [(
         """6a, 6a+ - first
         6b:, 6b f - second
@@ -38,6 +38,11 @@ class TestParser:
         "6a",
         TrainingCategory.CLIMBING,
         [Row([Route("6a")])],
+    ),  (
+        """6a, 6a+ - first
+        """,
+        TrainingCategory.CLIMBING,
+        [Row([Route("6a"), Route("6a+")], "first")]
     ), (
         """exercise 1 - 1/2/3
         cool exercise - 1
@@ -54,8 +59,8 @@ class TestParser:
         [Row([Exercise(name="exercise 1", repeats=(1,))])],
     ),
     ])
-    def test_parse_rows_ok(self, text, training_category, expected):
-        rows = JournalParser.parse_rows(text=text, training_category=training_category)
+    def test_parse_rows_ok(self, text, training_cat, expected):
+        rows = JournalParser.parse_rows(text=text, training_category=training_cat)
         assert rows == expected
 
     @pytest.mark.parametrize(
@@ -64,7 +69,19 @@ class TestParser:
                 "6a, 6a+ rp f - first",
                 TrainingCategory.CLIMBING,
             ), (
+                " - first",
+                TrainingCategory.CLIMBING,
+            ), (
                 "exercise 1 - 0/0",
+                TrainingCategory.GYM,
+            ), (
+                "exercise 1 - ",
+                TrainingCategory.GYM,
+            ), (
+                " - 1/1/1",
+                TrainingCategory.GYM,
+            ), (
+                "exercise 1 1/1",
                 TrainingCategory.GYM,
             ),
         ]
@@ -72,3 +89,41 @@ class TestParser:
     def test_parse_rows_invalid(self, text, training_category):
         rows = JournalParser.parse_rows(text=text, training_category=training_category)
         assert rows == []
+
+    def test_parse_workout_ok(self, new_date):
+        w = JournalParser.parse_workout(
+            workout_date=new_date,
+            training_category=TrainingCategory.CLIMBING,
+            training_type=TrainingType.LEAD,
+            content="6a, 6b - my routes",
+            comments="-",
+        )
+        assert w == Workout(
+            date=new_date,
+            content=[
+                ClimbTrain(
+                    type=TrainingType.LEAD,
+                    rows=[Row([Route("6a"), Route("6b")], "my routes")],
+                    comments="",
+                )
+            ],
+            comments=""
+        )
+        w = JournalParser.parse_workout(
+            workout_date=new_date,
+            training_category=TrainingCategory.GYM,
+            training_type=TrainingType.GPP,
+            content="the best ex - 99",
+            comments="-",
+        )
+        assert w == Workout(
+            date=new_date,
+            content=[
+                GymTrain(
+                    type=TrainingType.GPP,
+                    rows=[Row([Exercise("the best ex", (99,))])],
+                    comments="",
+                )
+            ],
+            comments=""
+        )
