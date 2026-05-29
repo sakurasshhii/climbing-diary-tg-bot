@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 from collections.abc import Sequence
+from unittest.mock import AsyncMock
 
 import pytest
 from app.domain.models import (
@@ -17,7 +18,9 @@ from app.domain.enums import (
     TrainingCategory,
     TrainingType
 )
+from app.services.services import UserService, JournalService
 
+# —————————————————————————— models ————————————————————————————
 @pytest.fixture
 def new_date() -> dt.date:
     return dt.datetime.now().date()
@@ -69,3 +72,23 @@ def workout_climb(train_climb_fill, new_date) -> Workout:
 @pytest.fixture
 def workout_gym(train_gym_fill, new_date) -> Workout:
     return Workout(date=new_date, content=[train_gym_fill])
+
+# —————————————————————————— services ————————————————————————————
+@pytest.fixture
+def user_repo():
+    return AsyncMock
+
+@pytest.fixture
+def journal_repo():
+    return AsyncMock()
+
+@pytest.fixture
+def user_service(user_repo):
+    return UserService(user_repo)
+
+@pytest.fixture
+def journal_service(user_repo, journal_repo):
+    return JournalService(
+        user_repo,
+        journal_repo,
+    )
