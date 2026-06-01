@@ -1,6 +1,4 @@
-import asyncio
 from collections.abc import Iterable
-
 
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.exceptions import UserNotFoundError

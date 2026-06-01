@@ -9,8 +9,8 @@ import pytest
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import (ClimbTrain, Exercise, GymTrain, Journal, Route,
                                Row, Workout)
+from app.infrastructure.database.repo import JournalRepository, UserRepository
 from app.services.services import JournalService, UserService
-from app.infrastructure.database.repo import UserRepository, JournalRepository
 
 
 # —————————————————————————— models ————————————————————————————

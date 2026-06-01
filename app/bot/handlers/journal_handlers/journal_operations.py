@@ -8,11 +8,12 @@ Get information from DB.
 import logging
 from collections.abc import Iterable
 
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove, BufferedInputFile
+from aiogram.types import (BufferedInputFile, CallbackQuery, Message,
+                           ReplyKeyboardRemove)
 
 from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.validators import (

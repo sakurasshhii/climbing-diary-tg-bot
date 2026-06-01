@@ -6,10 +6,10 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 
-from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
-                               DBWorkout, Exercise, GymTrain, Route, Row,
-                               Workout, Train, Journal)
 from app.domain.enums import TrainingCategory, TrainingType
+from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
+                               DBWorkout, Exercise, GymTrain, Journal, Route,
+                               Row, Train, Workout)
 
 from .database import Database, Transaction
 from .sql_models import *

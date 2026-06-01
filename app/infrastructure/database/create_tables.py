@@ -17,7 +17,7 @@ users(id, tg_id, username, last_journal)
 """
 
 from .database import Database
-from .sql_models import SCRIPT_CREATE_TABLES, CREATE_INDICIES
+from .sql_models import CREATE_INDICIES, SCRIPT_CREATE_TABLES
 
 
 async def create_tables(db: Database) -> None:

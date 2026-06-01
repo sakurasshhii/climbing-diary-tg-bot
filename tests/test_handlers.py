@@ -1,8 +1,9 @@
 import pytest
 
-from app.bot.handlers.commands import (
-    process_start_command, process_help_command, process_cancel_command,
-    undefined_message, undefined_cback)
+from app.bot.handlers.commands import (process_cancel_command,
+                                       process_help_command,
+                                       process_start_command, undefined_cback,
+                                       undefined_message)
 from app.lexic.ru import MAIN_MENU_MSG, UNDEFINED
 
 
