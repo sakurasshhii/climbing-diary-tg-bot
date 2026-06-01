@@ -76,7 +76,7 @@ def workout_gym(train_gym_fill, new_date) -> Workout:
 # —————————————————————————— services ————————————————————————————
 @pytest.fixture
 def user_repo():
-    return AsyncMock
+    return AsyncMock()
 
 @pytest.fixture
 def journal_repo():
