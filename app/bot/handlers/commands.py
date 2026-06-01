@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
-from app.lexic.ru import MAIN_MENU_MSG
+from app.lexic.ru import MAIN_MENU_MSG, UNDEFINED
 from app.services.services import UserService
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ async def process_help_command(message: Message, user_service: UserService) -> N
     await message.answer(MAIN_MENU_MSG["/help"])
 
 @commands_router.message(Command("cancel"), ~StateFilter(default_state))
-async def cancel_processing(message: Message, state: FSMContext) -> None:
+async def process_cancel_command(message: Message, state: FSMContext) -> None:
     """/cancel — use to escape any FSM process."""
     user_state = await state.get_state()
     logger.info("Пользователь прервал операцию на состоянии=%s", user_state)
@@ -48,7 +48,7 @@ async def cancel_processing(message: Message, state: FSMContext) -> None:
 @undefined_router.message()
 async def undefined_message(message: Message) -> None:
     """Any undefined messages from user."""
-    await message.answer(text="undefined message!")
+    await message.answer(text=UNDEFINED["message"])
     logger.warning("Undefined message=%s", message.text)
 
 @undefined_router.callback_query()
@@ -56,5 +56,5 @@ async def undefined_cback(cback: CallbackQuery, state: FSMContext) -> None:
     """Any undefined callback."""
     user_state = await state.get_state()
     if cback.message:
-        await cback.message.answer(text="undefined callback!")
+        await cback.message.answer(text=UNDEFINED["callback"])
     logger.warning("Undefined callback=%s; state=%s", cback.data, user_state)

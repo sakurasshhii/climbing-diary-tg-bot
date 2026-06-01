@@ -65,13 +65,17 @@ def workout_climb(train_climb_fill, new_date) -> Workout:
 def workout_gym(train_gym_fill, new_date) -> Workout:
     return Workout(date=new_date, content=[train_gym_fill])
 
-# —————————————————————————— services ————————————————————————————
+# —————————————————————————— AsyncMock ————————————————————————————
 @pytest.fixture
 def user_repo():
     return AsyncMock()
 
 @pytest.fixture
 def journal_repo():
+    return AsyncMock()
+
+@pytest.fixture
+def user_service_empty():
     return AsyncMock()
 
 @pytest.fixture
@@ -84,3 +88,23 @@ def journal_service(user_repo, journal_repo):
         user_repo,
         journal_repo,
     )
+
+@pytest.fixture
+def message_empty():
+    return AsyncMock()
+
+@pytest.fixture
+def message(message_empty):
+    message_empty.from_user.id = 123
+    message_empty.from_user.username = "my_name"
+    message_empty.text = "abc abc"
+
+    return message_empty
+
+@pytest.fixture
+def cback_empty():
+    return AsyncMock()
+
+@pytest.fixture
+def state():
+    return AsyncMock()

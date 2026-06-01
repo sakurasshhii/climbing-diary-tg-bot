@@ -14,6 +14,10 @@ MAIN_MENU_MSG: dict[str, str] = {
     '/my_journal': '',
     '/cancel': 'Вы прервали операцию.',
 }
+UNDEFINED: dict[str, str] = {
+    'message': 'Похоже, отправленное вами сообщение не распознано.',
+    'callback': 'Похоже, вы нажали кнопку, срок действия которой истек.',
+}
 FSM_ADD_TRAIN: dict[str, str] = {
 'error_journal_0': '''
 Похоже, у вас еще нет записанных тренировок.
