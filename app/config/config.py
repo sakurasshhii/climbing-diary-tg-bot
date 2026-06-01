@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+
 from environs import Env
 
 logger = logging.getLogger(__name__)

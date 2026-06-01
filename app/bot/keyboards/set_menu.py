@@ -1,5 +1,6 @@
 from aiogram import Bot
 from aiogram.types import BotCommand
+
 from app.lexic.ru import MAIN_MENU
 
 

@@ -16,12 +16,8 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
 from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.validators import (
-    assure_callback_message,
-    assure_message_from_user_id,
-)
-from app.bot.keyboards.journal_keyboards import (
-    get_journals_kb
-)
+    assure_callback_message, assure_message_from_user_id)
+from app.bot.keyboards.journal_keyboards import get_journals_kb
 from app.bot.states.get_journal import FSMGetJournal
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal, Journal

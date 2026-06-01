@@ -1,19 +1,11 @@
 import datetime as dt
+
 import pytest
-from app.domain.models import (
-    Journal,
-    Workout,
-    GymTrain,
-    ClimbTrain,
-    Row,
-    Route,
-    Exercise,
-)
-from app.domain.enums import (
-    TrainingCategory,
-    TrainingType
-)
+
 import app.domain.exceptions as exc
+from app.domain.enums import TrainingCategory, TrainingType
+from app.domain.models import (ClimbTrain, Exercise, GymTrain, Journal, Route,
+                               Row, Workout)
 
 
 class TestExercise:

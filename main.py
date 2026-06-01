@@ -1,9 +1,10 @@
 import asyncio
 import logging
+
 from aiohttp_socks._errors import ProxyError
+
 from app.bot.bot import main
 from app.config.config import Config, load_config
-
 
 config: Config = load_config()
 

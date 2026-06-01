@@ -1,4 +1,4 @@
-from .database import Database
-from .sql_models import *
 from .create_tables import create_tables
-from .repo import UserRepository, JournalRepository
+from .database import Database
+from .repo import JournalRepository, UserRepository
+from .sql_models import *

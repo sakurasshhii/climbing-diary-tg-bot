@@ -1,11 +1,11 @@
 import datetime as dt
-import pytest
-
 from unittest.mock import AsyncMock, patch
 
-from app.domain.exceptions import UserNotFoundError
+import pytest
+
 from app.domain.enums import TrainingCategory, TrainingType
-from app.domain.models import Workout, Journal, Route
+from app.domain.exceptions import UserNotFoundError
+from app.domain.models import Journal, Route, Workout
 from app.services.services import JournalService
 
 

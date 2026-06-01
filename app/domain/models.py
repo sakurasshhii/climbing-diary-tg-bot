@@ -41,12 +41,12 @@ exercise_sets — вместо хранения повторений в json / �
 from __future__ import annotations
 
 import datetime as dt
-import re
 import logging
-
-import app.domain.exceptions as exc
+import re
 from dataclasses import dataclass, field
 from typing import Sequence
+
+import app.domain.exceptions as exc
 
 from .enums import TrainingCategory, TrainingType
 

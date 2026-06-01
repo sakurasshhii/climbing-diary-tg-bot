@@ -1,18 +1,13 @@
 from collections.abc import Iterable
-from aiogram.types import (
-    KeyboardButton,
-    ReplyKeyboardMarkup,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup
-)
-from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
-from app.lexic.ru_kboards import (
-    WORKOUT_DATE, TRAIN_CATEGORY, WORKOUT_WRITE,
-    TRAIN_TYPE_CLIMB, TRAIN_TYPE_GYM
-)
-from app.domain.enums import TrainingType, TrainingCategory
-from app.domain.models import DBJournal
 
+from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup,
+                           KeyboardButton, ReplyKeyboardMarkup)
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+
+from app.domain.enums import TrainingCategory, TrainingType
+from app.domain.models import DBJournal
+from app.lexic.ru_kboards import (TRAIN_CATEGORY, TRAIN_TYPE_CLIMB,
+                                  TRAIN_TYPE_GYM, WORKOUT_DATE, WORKOUT_WRITE)
 
 # ———————————————————————————— FSM date ——————————————————————————————————
 date_buttons = [

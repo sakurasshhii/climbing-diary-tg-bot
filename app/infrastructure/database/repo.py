@@ -1,25 +1,17 @@
 from __future__ import annotations
+
 import datetime as dt
 import json
 import logging
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 
-from app.domain.models import (
-    ClimbTrain,
-    Exercise,
-    GymTrain,
-    Route,
-    Row,
-    Workout,
-    DBJournal,
-    DBWorkout,
-    DBTrain,
-    DBRow
-)
+from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
+                               DBWorkout, Exercise, GymTrain, Route, Row,
+                               Workout)
+
 from .database import Database, Transaction
 from .sql_models import *
-
 
 logger = logging.getLogger(__name__)
 

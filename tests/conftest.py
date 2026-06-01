@@ -5,20 +5,12 @@ from collections.abc import Sequence
 from unittest.mock import AsyncMock
 
 import pytest
-from app.domain.models import (
-    Journal,
-    Workout,
-    GymTrain,
-    ClimbTrain,
-    Row,
-    Route,
-    Exercise,
-)
-from app.domain.enums import (
-    TrainingCategory,
-    TrainingType
-)
-from app.services.services import UserService, JournalService
+
+from app.domain.enums import TrainingCategory, TrainingType
+from app.domain.models import (ClimbTrain, Exercise, GymTrain, Journal, Route,
+                               Row, Workout)
+from app.services.services import JournalService, UserService
+
 
 # —————————————————————————— models ————————————————————————————
 @pytest.fixture

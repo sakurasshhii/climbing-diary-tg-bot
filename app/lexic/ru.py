@@ -1,6 +1,5 @@
 from app.domain.enums import TrainingCategory
 
-
 MAIN_MENU: dict[str, str] = {
     '/start': 'Начать',
     '/help': 'Информация',

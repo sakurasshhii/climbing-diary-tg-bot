@@ -1,14 +1,13 @@
 import asyncio
 from collections.abc import Iterable
 
-from app.infrastructure.database.repo import UserRepository, JournalRepository
-from app.domain.models import (
-    Journal, Workout, User, ClimbTrain, GymTrain, Row,
-    DBJournal, DBWorkout, DBTrain,
-)
-from app.domain.exceptions import UserNotFoundError
-from app.domain.enums import TrainingType, TrainingCategory
 from app.bot.states.add_workout import FSMWorkoutDataComplete
+from app.domain.enums import TrainingCategory, TrainingType
+from app.domain.exceptions import UserNotFoundError
+from app.domain.models import (ClimbTrain, DBJournal, DBTrain, DBWorkout,
+                               GymTrain, Journal, Row, User, Workout)
+from app.infrastructure.database.repo import JournalRepository, UserRepository
+
 from .parser import JournalParser
 
 

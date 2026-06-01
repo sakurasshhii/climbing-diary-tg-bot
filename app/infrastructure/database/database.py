@@ -5,7 +5,6 @@ from collections.abc import Iterable
 
 import aiosqlite
 
-
 logger = logging.getLogger(__name__)
 
 

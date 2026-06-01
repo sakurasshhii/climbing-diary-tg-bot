@@ -30,20 +30,12 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
 from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.validators import (
-    assure_callback_message,
-    assure_message_from_user_id,
-)
-from app.bot.keyboards.journal_keyboards import (
-    date_kboard,
-    train_type_kboard,
-    train_cat_kboard,
-    check_kboard,
-)
-from app.bot.states.add_workout import (
-    FSMFillWorkout,
-    FSMWorkoutData,
-    FSMWorkoutDataComplete,
-)
+    assure_callback_message, assure_message_from_user_id)
+from app.bot.keyboards.journal_keyboards import (check_kboard, date_kboard,
+                                                 train_cat_kboard,
+                                                 train_type_kboard)
+from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
+                                        FSMWorkoutDataComplete)
 from app.domain.enums import TrainingCategory, TrainingType
 from app.lexic.ru import FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT
 from app.services.services import JournalService, UserService

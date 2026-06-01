@@ -1,5 +1,7 @@
-from aiogram.types import Message, CallbackQuery, InaccessibleMessage
+from aiogram.types import CallbackQuery, InaccessibleMessage, Message
+
 from app.bot.handlers import exceptions as exc
+
 
 def assure_message_from_user_id(message: Message) -> Message:
     if not message.from_user or not message.from_user.id:

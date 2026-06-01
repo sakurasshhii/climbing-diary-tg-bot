@@ -4,14 +4,8 @@ import re
 from typing import Sequence
 
 from app.domain.enums import TrainingCategory, TrainingType
-from app.domain.models import (
-    ClimbTrain,
-    Exercise,
-    GymTrain,
-    Route,
-    Row,
-    Workout,
-)
+from app.domain.models import (ClimbTrain, Exercise, GymTrain, Route, Row,
+                               Workout)
 
 logger = logging.getLogger(__name__)
 

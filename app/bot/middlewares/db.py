@@ -1,9 +1,9 @@
+from typing import Any, Awaitable, Callable, Dict
+
 from aiogram import BaseMiddleware
-from typing import Callable, Dict, Any, Awaitable
 
-from app.infrastructure.database.repo import UserRepository, JournalRepository
 from app.infrastructure.database import Database
-
+from app.infrastructure.database.repo import JournalRepository, UserRepository
 from app.services.services import JournalService, UserService
 
 
