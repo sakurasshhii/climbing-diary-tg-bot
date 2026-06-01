@@ -10,6 +10,7 @@ from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import (ClimbTrain, Exercise, GymTrain, Journal, Route,
                                Row, Workout)
 from app.services.services import JournalService, UserService
+from app.infrastructure.database.repo import UserRepository, JournalRepository
 
 
 # —————————————————————————— models ————————————————————————————
@@ -67,12 +68,24 @@ def workout_gym(train_gym_fill, new_date) -> Workout:
 
 # —————————————————————————— AsyncMock ————————————————————————————
 @pytest.fixture
+def db_mock():
+    return AsyncMock()
+
+@pytest.fixture
 def user_repo():
     return AsyncMock()
 
 @pytest.fixture
+def user_repo_db(db_mock):
+    return UserRepository(db_mock)
+
+@pytest.fixture
 def journal_repo():
     return AsyncMock()
+
+@pytest.fixture
+def journal_repo_db(db_mock):
+    return JournalRepository(db_mock)
 
 @pytest.fixture
 def user_service_empty():

@@ -159,17 +159,14 @@ class TestJournalService:
         get_workout_mock,
         journal_repo,
         journal_service,
+        workout_climb
     ):
         journal_raw = AsyncMock()
         journal_raw.id = 1
         journal_raw.comments = "journal"
         journal_repo.get_journal.return_value = (journal_raw)
         journal_repo.get_workouts.return_value = [object(), object()]
-
-        get_workout_mock.side_effect = [
-            Workout(dt.date.today()),
-            Workout(dt.date.today()),
-        ]
+        get_workout_mock.side_effect = [workout_climb, workout_climb]
 
         result = await journal_service.get_complete_journal(1)
 

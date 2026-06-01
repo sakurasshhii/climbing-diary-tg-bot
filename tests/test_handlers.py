@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import AsyncMock
 
 from app.bot.handlers.commands import (
     process_start_command, process_help_command, process_cancel_command,
