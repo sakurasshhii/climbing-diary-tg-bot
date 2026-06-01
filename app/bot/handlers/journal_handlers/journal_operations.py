@@ -12,7 +12,7 @@ from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove, BufferedInputFile
 
 from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.validators import (
@@ -59,14 +59,25 @@ async def process_show_journal(
     journal_service: JournalService
 ) -> None:
     await cback.answer()
+    await state.clear()
     message = assure_callback_message(cback)
+
     if cback.data is None:
         raise ValueError
 
-    journal: Journal = await journal_service.get_complete_journal(int(cback.data))
+    journal: Journal | None = await journal_service.get_complete_journal(int(cback.data))
 
-    await state.clear()
+    if journal is None:
+        await message.answer(text="NOT FOUND")
+        return
+
     await message.answer(
-        text=str(journal),
+        text="JOURNAL IN TXT DOC —>",
         reply_markup=ReplyKeyboardRemove()
+    )
+    await message.answer_document(
+        document=BufferedInputFile(
+            file=str(journal).encode("utf-8"),
+            filename="my_journal.txt"
+        )
     )

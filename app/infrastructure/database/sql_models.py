@@ -220,6 +220,69 @@ FROM exercises
 WHERE row_id IN ({});
 """
 
+GET_J_FROM_JOURNALS = """
+SELECT * FROM journals
+WHERE id=?;"""
+
+GET_J_WORKOUTS = """
+SELECT *
+FROM workouts
+WHERE journal_id=?
+ORDER BY workout_date;"""
+
+GET_J_TRAINS = """
+SELECT t.*
+FROM trains t
+JOIN workouts w
+    ON w.id=t.workout_id
+WHERE w.journal_id=?
+ORDER BY t.id;"""
+
+GET_J_ROWS = """
+SELECT r.*
+FROM rows r
+JOIN trains t
+    ON t.id = r.train_id
+JOIN workouts w
+    ON w.id = t.workout_id
+WHERE w.journal_id = ?
+ORDER BY
+    r.train_id,
+    r.row_order;
+"""
+
+GET_J_ROUTES = """
+SELECT
+    rt.*
+FROM routes rt
+JOIN rows r
+    ON r.id = rt.row_id
+JOIN trains t
+    ON t.id = r.train_id
+JOIN workouts w
+    ON w.id = t.workout_id
+WHERE w.journal_id = ?
+ORDER BY
+    rt.row_id,
+    rt.route_order;
+"""
+
+GET_J_EXERCISES = """
+SELECT
+    ex.*
+FROM exercises ex
+JOIN rows r
+    ON r.id = ex.row_id
+JOIN trains t
+    ON t.id = r.train_id
+JOIN workouts w
+    ON w.id = t.workout_id
+WHERE w.journal_id = ?
+ORDER BY
+    ex.row_id,
+    ex.exercise_order;
+"""
+
 ############################## update data #################################
 
 UPDATE_JOURNAL_PERIOD = """

@@ -147,65 +147,17 @@ class JournalRepository:
             return None
 
         return DBJournal(**dict(journal))
-    
+
+    async def get_journals(self, user_id: int) -> Iterable[DBJournal]:
+        """Возвращает все journals пользователя по его id."""
+        journals = await self.db.fetchall(
+            GET_JOURNALS,
+            (user_id, ),
+        )
+        return tuple(DBJournal(**j) for j in journals)
+
     async def get_journal_full(self, journal_id: int) -> Journal | None:
-        GET_J_FROM_JOURNALS = """
-            SELECT * FROM journals
-            WHERE id=?;"""
-        GET_J_WORKOUTS = """
-            SELECT *
-            FROM workouts
-            WHERE journal_id=?
-            ORDER BY workout_date;"""
-        GET_J_TRAINS = """
-            SELECT t.*
-            FROM trains t
-            JOIN workouts w
-                ON w.id=t.workout_id
-            WHERE w.journal_id=?
-            ORDER BY t.id;"""
-        GET_J_ROWS = """
-            SELECT r.*
-            FROM rows r
-            JOIN trains t
-                ON t.id = r.train_id
-            JOIN workouts w
-                ON w.id = t.workout_id
-            WHERE w.journal_id = ?
-            ORDER BY
-                r.train_id,
-                r.row_order;
-            """
-        GET_J_ROUTES = """
-            SELECT
-                rt.*
-            FROM routes rt
-            JOIN rows r
-                ON r.id = rt.row_id
-            JOIN trains t
-                ON t.id = r.train_id
-            JOIN workouts w
-                ON w.id = t.workout_id
-            WHERE w.journal_id = ?
-            ORDER BY
-                rt.row_id,
-                rt.route_order;
-            """
-        GET_J_EXERCISES = """
-            SELECT
-                ex.*
-            FROM exercises ex
-            JOIN rows r
-                ON r.id = ex.row_id
-            JOIN trains t
-                ON t.id = r.train_id
-            JOIN workouts w
-                ON w.id = t.workout_id
-            WHERE w.journal_id = ?
-            ORDER BY
-                ex.row_id,
-                ex.exercise_order;
-            """
+        """Собирает и возвращает Journal с полной информацией о тренировках."""
         async with Transaction(self.db) as db:
             db_journal = await db.fetchone(GET_J_FROM_JOURNALS, (journal_id,))
             if not db_journal:
@@ -217,7 +169,7 @@ class JournalRepository:
             rows = await db.fetchall(GET_J_ROWS, (journal_id,))
             routes = await db.fetchall(GET_J_ROUTES, (journal_id,))
             exercises = await db.fetchall(GET_J_EXERCISES, (journal_id,))
-        
+
         routes_by_row = defaultdict(list)
         for r in routes:
             route = Route(
@@ -226,7 +178,7 @@ class JournalRepository:
                 flash=bool(r["flash"]),
             )
             routes_by_row[r["row_id"]].append(route)
-        
+
         exercises_by_row = defaultdict(list)
         for e in exercises:
             ex = Exercise(
@@ -234,14 +186,14 @@ class JournalRepository:
                 repeats=tuple(json.loads(e["repeats"]))
             )
             exercises_by_row[e["row_id"]].append(ex)
-        
+
         rows_by_train = defaultdict(list)
         for r in rows:
             r = DBRow(**r)
             content = tuple(routes_by_row[r.id]) if routes_by_row[r.id] \
                 else tuple(exercises_by_row[r.id])
             rows_by_train[r.train_id].append(Row(content=content, comments=r.comments))
-        
+
         trains_by_workout = defaultdict(list)
         for tr in trains:
             tr = DBTrain(**tr)
@@ -256,7 +208,7 @@ class JournalRepository:
                 )
             except TypeError as e:
                 logger.error("WRONG DATABASE TYPE. ENUM NEEDED: %s %s", tr.category, tr.type)
-        
+
         workouts = []
         for w in db_workouts:
             w = DBWorkout(**w)
@@ -265,97 +217,8 @@ class JournalRepository:
                 content=trains_by_workout[w.id],
                 comments=w.comments or "",
             ))
-        
+
         return Journal(
             content=workouts,
             comments=db_journal.comments or ""
         )
-
-    async def get_journals(self, user_id: int) -> Iterable[DBJournal]:
-        """Возвращает все journals пользователя по его id."""
-        journals = await self.db.fetchall(
-            GET_JOURNALS,
-            (user_id, ),
-        )
-        return tuple(DBJournal(**j) for j in journals)
-
-    async def get_workouts(self, journal_id: int) -> Iterable[DBWorkout]:
-        """Возвращает все workouts из journal."""
-        raw_workouts = await self.db.fetchall(
-            GET_WORKOUTS,
-            (journal_id,),
-        )
-        return tuple(DBWorkout(**w) for w in raw_workouts if w)
-
-    # async def get_trains(self, workout_ids: Iterable[int]) -> Mapping[int, list[DBTrain]]:
-    #     """Возвращает все trains из workouts в виде словаря, где ключами являются workout.id."""
-    #     ids = tuple(workout_ids)
-    #     placeholders = self._get_placeholders(len(ids))
-    #     rows = await self.db.fetchall(
-    #         GET_TRAINS_BY_WORKOUTS.format(placeholders),
-    #         ids,
-    #     )
-
-    #     grouped = defaultdict(list)
-    #     for tr in rows:
-    #         train = DBTrain(**dict(tr))
-    #         grouped[train.workout_id].append(tr)
-
-    #     return grouped
-
-    async def get_trains(self, workout_id: int) -> Iterable[DBTrain]:
-        """Возвращает все trains из workout."""
-        raw_train = await self.db.fetchall(
-            GET_TRAINS_BY_WORKOUT,
-            (workout_id,),
-        )
-        return tuple(DBTrain(**t)for t in raw_train if t)
-
-    async def get_rows(self, train: DBTrain) -> tuple[DBRow, ...]:
-        """Возвращает список с подходами для trains."""
-        raw_rows = await self.db.fetchall(
-            GET_ROWS_BY_TRAINS.format("?"),
-            (train.workout_id,),
-        )
-        raw_rows = [DBRow(**dict(r)) for r in raw_rows]
-        return tuple(raw_rows)
-
-    async def get_routes(self, rows: Iterable[DBRow]) -> Mapping[int, Iterable[Route]]:
-        """Возвращает список трасс по индексам подходов."""
-        row_ids = [row.id for row in rows]
-        routes_by_row_id: dict[int, list[Route]] = defaultdict(list)
-        placeholders = self._get_placeholders(len(row_ids))
-
-        raw_routes = await self.db.fetchall(
-            GET_ROUTES_BY_ROWS.format(placeholders),
-            tuple(row_ids),
-        )
-        for route in raw_routes:
-            routes_by_row_id[route["row_id"]].append(
-                Route(grade=route["grade"], falls=route["falls"], flash=bool(route["flash"]))
-            )
-
-        return routes_by_row_id
-
-    async def get_exercises(self, rows: Iterable[DBRow]) -> Mapping[int, Iterable[Exercise]]:
-        """Возвращает список упражнений по индексам подходов."""
-        row_ids = [row.id for row in rows]
-        exercises_by_row_id = defaultdict(list)
-        placeholders = ",".join("?" * len(row_ids))
-
-        raw_exercises = await self.db.fetchall(
-            GET_EXERCISES_BY_ROWS.format(placeholders),
-            tuple(row_ids),
-        )
-        for ex in raw_exercises:
-            exercises_by_row_id[ex["row_id"]].append(
-                Exercise(
-                    name=ex["name"],
-                    repeats=tuple(json.loads(ex["repeats"]))
-                )
-            )
-
-        return exercises_by_row_id
-
-    def _get_placeholders(self, n: int) -> str:
-        return ",".join("?" * n)
