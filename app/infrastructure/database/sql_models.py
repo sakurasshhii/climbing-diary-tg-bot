@@ -92,6 +92,26 @@ CREATE TABLE IF NOT EXISTS exercises (
 );
 """
 
+CREATE_INDICIES = """
+CREATE INDEX IF NOT EXISTS idx_journal_user
+ON journals(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_workout_journal
+ON workouts(journal_id);
+
+CREATE INDEX IF NOT EXISTS idx_train_workout
+ON trains(workout_id);
+
+CREATE INDEX IF NOT EXISTS idx_row_train
+ON rows(train_id);
+
+CREATE INDEX IF NOT EXISTS idx_route_row
+ON routes(row_id);
+
+CREATE INDEX IF NOT EXISTS idx_exercise_row
+ON exercises(row_id);
+"""
+
 ################ user repo operations ################
 ################ insert data #########################
 
@@ -175,10 +195,17 @@ FROM trains
 WHERE workout_id = ?;
 """
 
+GET_TRAINS_BY_WORKOUTS = """
+SELECT *
+FROM trains
+WHERE workout_id IN ({});
+"""
+
 GET_ROWS_BY_TRAINS = """
 SELECT *
 FROM rows
-WHERE train_id IN ({});
+WHERE train_id IN ({})
+ORDER BY row_index;
 """
 
 GET_ROUTES_BY_ROWS = """

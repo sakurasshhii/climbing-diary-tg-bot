@@ -17,7 +17,7 @@ users(id, tg_id, username, last_journal)
 """
 
 from .database import Database
-from .sql_models import SCRIPT_CREATE_TABLES
+from .sql_models import SCRIPT_CREATE_TABLES, CREATE_INDICIES
 
 
 async def create_tables(db: Database) -> None:
@@ -25,4 +25,5 @@ async def create_tables(db: Database) -> None:
 
     await db.conn.execute("PRAGMA foreign_keys = ON")
     await db.conn.executescript(SCRIPT_CREATE_TABLES)
+    await db.conn.executescript(CREATE_INDICIES)
     await db.conn.commit()

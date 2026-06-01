@@ -253,6 +253,20 @@ class Train:
     def set_comment(self, val: str) -> None:
         if len(val) and isinstance(val, str):
             object.__setattr__(self, "comments", val)
+    
+    @classmethod
+    def from_training_category(
+        cls,
+        training_category: TrainingCategory,
+        type: TrainingType,
+        rows: list[Row] = field(default_factory=list),
+        comments: str = "",
+    ) -> ClimbTrain | GymTrain:
+        match training_category:
+            case TrainingCategory.CLIMBING:
+                return ClimbTrain(type, rows, comments)
+            case TrainingCategory.GYM:
+                return GymTrain(type, rows, comments)
 
     def __str__(self) -> str:
         content: str = "\n".join((str(r) for r in self.rows))
