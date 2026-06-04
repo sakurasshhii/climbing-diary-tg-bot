@@ -4,9 +4,8 @@ import datetime as dt
 import json
 import logging
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable
 
-from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
                                DBWorkout, Exercise, GymTrain, Journal, Route,
                                Row, Train, Workout)
@@ -169,6 +168,8 @@ class JournalRepository:
             rows = await db.fetchall(GET_J_ROWS, (journal_id,))
             routes = await db.fetchall(GET_J_ROUTES, (journal_id,))
             exercises = await db.fetchall(GET_J_EXERCISES, (journal_id,))
+
+            logger.info("%s: SQL query count: 5", __name__)
 
         routes_by_row = defaultdict(list)
         for r in routes:
