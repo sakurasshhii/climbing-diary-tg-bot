@@ -1,6 +1,10 @@
 # pytest
 htmlcov/
 
+# profiling
+profile.prof
+profile.out
+
 # Aiosqlite files
 *.db
 *.db-shm

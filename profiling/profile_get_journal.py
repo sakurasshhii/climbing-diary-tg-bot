@@ -22,7 +22,7 @@ async def scenario():
     service: JournalService = JournalService(user_repo=user_repo, journal_repo=journal_repo)
 
     # ————————————————————————— profile ——————————————————————————
-    for _ in range(100):
+    for _ in range(1000):
         await service.get_complete_journal(1)
 
 
