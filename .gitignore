@@ -2,8 +2,8 @@
 htmlcov/
 
 # profiling
-profile.prof
-profile.out
+*.prof
+*.out
 
 # Aiosqlite files
 *.db
