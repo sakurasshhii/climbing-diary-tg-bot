@@ -1,8 +1,9 @@
-'''
-Классы, формирующие тренировочный журнал длительностью один тренировочный цикл.
+"""models:
 
-***
-Structure:
+1. Классы, существующие для представления информации из БД.
+2. Классы, формирующие тренировочный журнал длительностью (описывают тр. цикл).
+
+———————————————————————————— Structure ———————————————————————————
 
 Journal(
     content: list = [Workout(), ...],        # all trainings in training cycle
@@ -26,25 +27,25 @@ Workout(
 
 * - not necessarily arguments
 
-***
-В базовой реализации (сейчас):
-Exercise всегда существует в Set в одном экземпляре, внутри которого уазан repeats.
-То есть, весь Set записан в одном упражнении. (len(Set) == 1)
-***
-Расширение на будующее:
-exercise_sets — вместо хранения повторений в json / списке
-├── exercise_id
-├── weight
-├── reps
-├── order
-'''
+———————————————————————————— To do ———————————————————————————————
+1. exercise_sets — вместо хранения повторений в json-сериализации / списке
+Exercise_sets (exercise_id, weight, reps, order)
+
+2. Добавить возможность круговой тренировки.
+На данный момент Exercise всегда существует в Set в одном экземпляре,
+    т.е. в одном подходе могут быть повторы только одного упражнения.
+
+3. Добавить журналам название (name) — для более удобного поиска.
+На данный момент поиск организован по датам, что особенно неудобно для давних журналов.
+"""
+
 from __future__ import annotations
 
 import datetime as dt
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Sequence
+from collections.abc import Sequence
 
 import app.domain.exceptions as exc
 
@@ -53,11 +54,17 @@ from .enums import TrainingCategory, TrainingType
 logger = logging.getLogger(__name__)
 
 
-# ———————————————————————————— dataclasses as DB tables ——————————————————————————————————
+# ———————————————————————————— contstant —————————————————————————————————————————————
+
+DATE_FORMAT = r"%d.%m.%Y"
+REP_DELIMITER = "/"
+
+# ———————————————————————————— 1. dataclasses as DB tables ———————————————————————————
 
 @dataclass
 class User:
     """User representation from DB table «users»."""
+
     id: int
     tg_id: int
     username: str
@@ -67,6 +74,7 @@ class User:
 @dataclass
 class DBJournal:
     """Journal representation from DB table «journals»."""
+
     id: int
     user_id: int
     comments: str
@@ -74,18 +82,19 @@ class DBJournal:
     period_end: dt.date | None
 
     def __post_init__(self):
-        def convert_date(date):
+        def convert_date(date) -> dt.date | None:
             return dt.date.fromisoformat(date) if date else None
-        
-        self.period_start = convert_date(self.period_start)
-        self.period_end = convert_date(self.period_end)
+
+        if isinstance(self.period_end, str) or isinstance(self.period_start, str):
+            self.period_start = convert_date(self.period_start)
+            self.period_end = convert_date(self.period_end)
 
     @property
     def dates(self):
-        dates = tuple(map(
-            lambda d: d.strftime("%d.%m.%Y") if d else "...",
-            [self.period_start, self.period_end]
-        ))
+        dates = tuple([
+            d.strftime(DATE_FORMAT) if d else "..."
+            for d in [self.period_start, self.period_end]
+        ])
         return "{} - {}".format(*dates)
 
 
@@ -105,7 +114,7 @@ class DBWorkout:
 
 @dataclass
 class DBTrain:
-    """Train representation from DB table «trains»"""
+    """Train representation from DB table «trains»."""
 
     id: int
     workout_id: int
@@ -123,20 +132,20 @@ class DBTrain:
                 self.category = TrainingCategory[self.category.upper()]
             if isinstance(self.type, str):
                 self.type = TrainingType[self.type.upper()]
-        except ValueError, KeyError:
-            logger.error("Invalid data for DBTrain object.")
+        except (ValueError, KeyError):
+            logger.exception("Invalid data for DBTrain object.")
 
 
 @dataclass
 class DBRow:
-    """Row representation from DB table «rows»"""
+    """Row representation from DB table «rows»."""
 
     id: int
     train_id: int
     row_order: int
     comments: str
 
-# ———————————————————————————— journal structure ————————————————————————————————————————
+# ———————————————————————————— 2. journal structure ——————————————————————————————————
 
 @dataclass
 class Journal:
@@ -160,7 +169,7 @@ class Journal:
             return (self.content[0].date, self.content[-1].date)
         return (None, None)
 
-    def add_workout(self, workout: Workout):
+    def add_workout(self, workout: Workout) -> None:
         if not isinstance (workout, Workout):
             raise TypeError("Journal could contain Workout objects only.")
 
@@ -170,26 +179,26 @@ class Journal:
 
     def __str__(self) -> str:
         date_st, date_en = (
-            date.strftime("%d.%m.%Y") if date else "..."
+            date.strftime(DATE_FORMAT) if date else "..."
             for date in self.period
         )
         date: str = "Дневник {}-{}".format(date_st, date_en)
         comments: str = f"Комментарии: {self.comments}" if self.comments else ""
         if self.content:
-            content: str = "\n———\n".join(str(x) for x in self.content)
+            content: str = "\n——————————\n".join(str(x) for x in self.content)
         else:
             content: str = "Нет тренировок."
 
-        return "\n".join((date, comments, content))
-    
-    def __len__(self):
+        return "\n".join(x for x in (date, comments, " ", content) if x)
+
+    def __len__(self) -> int:
         return len(self.content)
 
 
 @dataclass
 class Workout:
-    """
-    One workout session.
+    """One workout session.
+
     Could contain several training types.
     """
 
@@ -214,7 +223,7 @@ class Workout:
         return tuple(self.content)
 
     def __str__(self) -> str:
-        date = "{}".format(self.date.strftime("%d.%m.%Y"))
+        date = self.date.strftime(DATE_FORMAT)
         content = "\n".join(str(x) for x in self.content)
         comments = f"Комментарии: {self.comments}" if self.comments else ""
         data = [x for x in (date, content, comments) if x]
@@ -224,8 +233,8 @@ class Workout:
 
 @dataclass(frozen=True)
 class Train:
-    """
-    Group of the same physical activity.
+    """Group of the same physical activity.
+
     Parent class for climbing / gym training.
     """
 
@@ -245,7 +254,7 @@ class Train:
     def add_row(self, row: Row) -> None:
         if not isinstance(row, Row):
             raise TypeError("Train must contain Row objects only.")
-        elif not self.training_category == row.training_category:
+        if not self.training_category == row.training_category:
             raise TypeError("Train must contain one trainig type.")
 
         self.rows.append(row)
@@ -253,7 +262,7 @@ class Train:
     def set_comment(self, val: str) -> None:
         if len(val) and isinstance(val, str):
             object.__setattr__(self, "comments", val)
-    
+
     @classmethod
     def from_training_category(
         cls,
@@ -269,9 +278,15 @@ class Train:
                 return GymTrain(type, rows, comments)
 
     def __str__(self) -> str:
-        content: str = "\n".join((str(r) for r in self.rows))
+        tr_type = {
+            TrainingType.LEAD: "Трудность",
+            TrainingType.BOULDER: "Боулдер",
+            TrainingType.GPP: "ОФП",
+            TrainingType.SFP: "СФП",
+        }
+        content: str = "\n".join(str(r) for r in self.rows)
         comments = f"Комментарии: {self.comments}" if self.comments else ""
-        data = [x for x in (self.type.value, content, comments) if x]
+        data = [x for x in (tr_type[self.type], content, comments) if x]
 
         return "\n".join(data)
 
@@ -304,6 +319,12 @@ class Row:
 
         object.__setattr__(self, "content", tuple(self.content))
 
+    def __str__(self) -> str:
+        content: str = ", ".join(str(r) for r in self.content)
+        comments = f" — {self.comments}" if self.comments else ""
+
+        return content + comments
+
 
 @dataclass(frozen=True)
 class Route:
@@ -312,27 +333,28 @@ class Route:
     grade: str                      # French grade from 5a to 9b+
     falls: int | bool = False       # Count of falls in route before top
     flash: bool = False             # Flash flag
-    red_point: bool = False
+    red_point: bool = False         # Red point flag
 
     def __post_init__(self) -> None:
-        if not re.fullmatch(r'\d[abcABC]\+?', self.grade):
-            raise ValueError(f'Invalid grade: {self.grade}')
+        if not re.fullmatch(r"\d[abcABC]\+?", self.grade):
+            raise ValueError(f"Invalid grade: {self.grade}")
         if not isinstance(self.falls, (int, bool)) or self.falls < 0 or self.falls > 50:
-            raise ValueError(f'Invalid falls count: {self.falls}')
+            raise ValueError(f"Invalid falls count: {self.falls}")
         if not isinstance(self.flash, bool) or self.flash and self.falls:
-            raise ValueError(f'Invalid flash flag: {self.flash}')
+            raise ValueError(f"Invalid flash flag: {self.flash}")
         if not isinstance(self.red_point, bool) or \
             self.red_point and self.falls or \
             self.red_point and self.flash:
-            raise ValueError(f"Red point flag failed")
+            raise ValueError("Red point flag failed")
 
     def __str__(self) -> str:
         info = []
-        info.append(f"falls: {self.falls}") if self.falls else None
-        info.append("flash") if self.flash else None
-        info = ", ".join(info)
+        info.append(f":{self.falls}") if self.falls else None
+        info.append(" f") if self.flash else None
+        info.append(" rp") if self.red_point else None
+        info = "".join(info)
 
-        return self.grade + f"({info})" if info else self.grade
+        return self.grade + info if info else self.grade
 
 @dataclass(frozen=True)
 class Exercise:
@@ -343,11 +365,11 @@ class Exercise:
 
     def __post_init__(self) -> None:
         if not self.name:
-            raise ValueError('Invalid input: empty name')
+            raise ValueError("Invalid input: empty name")
         if not self.repeats or any(x <= 0 for x in self.repeats):
-            raise ValueError(f'Invalid repeats: {self.repeats}')
+            raise ValueError(f"Invalid repeats: {self.repeats}")
 
     def __str__(self) -> str:
-        repeats = "/".join((str(n) for n in self.repeats))
+        repeats = REP_DELIMITER.join(str(n) for n in self.repeats)
 
         return f"{self.name} {repeats}"
