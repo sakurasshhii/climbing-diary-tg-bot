@@ -41,11 +41,6 @@ class UserService:
         return await self.get_user(tg_id) # type: ignore
 
 class JournalService:
-    TRAIN_CLASS = {
-        TrainingCategory.CLIMBING: ClimbTrain,
-        TrainingCategory.GYM: GymTrain,
-    }
-
     def __init__(
         self, user_repo: UserRepository,
         journal_repo: JournalRepository
@@ -89,7 +84,11 @@ class JournalService:
 
     async def get_complete_journal(self, journal_id: int) -> Journal | None:
         """Возвращает Journal пользователя."""
-        return await self.journal_repo.get_journal_full(journal_id)
+        journal = await self.journal_repo.get_journal_full(journal_id)
+        if journal is None:
+            raise ValueError("Journal not found")
+
+        return journal
 
     @staticmethod
     def training_sets_validation(text: str, training_cat: TrainingCategory) -> bool:

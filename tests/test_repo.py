@@ -74,5 +74,10 @@ class TestJournalRepo:
 
     @pytest.mark.asyncio
     async def test_add_workout(self):
-        # TODO
+        # TO DO
+        pass
+
+    @pytest.mark.asyncio
+    async def test_get_journal_full_ok(self):
+        # TO DO
         pass

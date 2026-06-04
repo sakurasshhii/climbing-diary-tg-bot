@@ -316,6 +316,8 @@ class Row:
             object.__setattr__(self, "training_category", TrainingCategory.CLIMBING)
         if isinstance(self.content[0], Exercise):
             object.__setattr__(self, "training_category", TrainingCategory.GYM)
+        if self.comments == "-":
+            object.__setattr__(self, "comments", "")
 
         object.__setattr__(self, "content", tuple(self.content))
 
@@ -349,7 +351,10 @@ class Route:
 
     def __str__(self) -> str:
         info = []
-        info.append(f":{self.falls}") if self.falls else None
+        if self.falls:
+            info.append(":")
+            if not isinstance(self.falls, bool):
+                info.append(str(self.falls))
         info.append(" f") if self.flash else None
         info.append(" rp") if self.red_point else None
         info = "".join(info)

@@ -1,11 +1,11 @@
 import datetime as dt
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.exceptions import UserNotFoundError
-from app.domain.models import Journal, Route, Workout
+from app.domain.models import Journal
 from app.services.services import JournalService
 
 
@@ -147,59 +147,28 @@ class TestJournalService:
 
     @pytest.mark.asyncio
     async def test_get_complete_journal_not_found(self, journal_repo, journal_service):
-        journal_repo.get_journal.return_value = None
+        journal_repo.get_journal_full.return_value = None
 
         with pytest.raises(ValueError, match="Journal not found"):
             await journal_service.get_complete_journal(1)
 
     @pytest.mark.asyncio
-    @patch.object(JournalService, "get_workout", new_callable=AsyncMock)
     async def test_get_complete_journal_ok(
         self,
-        get_workout_mock,
         journal_repo,
         journal_service,
         workout_climb
-    ):
-        journal_raw = AsyncMock()
-        journal_raw.id = 1
-        journal_raw.comments = "journal"
-        journal_repo.get_journal.return_value = (journal_raw)
-        journal_repo.get_workouts.return_value = [object(), object()]
-        get_workout_mock.side_effect = [workout_climb, workout_climb]
+    ) -> None:
+        journal_repo.get_journal_full.return_value = Journal(
+            content=[workout_climb, workout_climb],
+            comments="my comment"
+        )
 
         result = await journal_service.get_complete_journal(1)
 
         assert isinstance(result, Journal)
-        assert len(result.content) == 2
-        assert result.comments == "journal"
-
-    @pytest.mark.asyncio
-    async def test_get_workout_ok(self, journal_repo, journal_service):
-        work_raw = AsyncMock()
-        work_raw.id = 1
-        work_raw.workout_date = dt.date.today()
-        work_raw.comments = "workout"
-
-        train_raw = AsyncMock()
-        train_raw.category = TrainingCategory.CLIMBING
-        train_raw.type = TrainingType.LEAD
-        train_raw.comments = "train"
-
-        row_raw = AsyncMock()
-        row_raw.comments = "row"
-
-        journal_repo.get_trains.return_value = [train_raw]
-        journal_repo.get_rows.return_value = [row_raw]
-        journal_repo.get_routes.return_value = {0: [Route("6a")]}
-
-        workout = await journal_service.get_workout(work_raw)
-
-        assert isinstance(workout, Workout)
-        assert len(workout.content) == 1
-
-        train = workout.content[0]
-        assert train.training_category == TrainingCategory.CLIMBING
+        assert len(result) == 2
+        assert result.comments == "my comment"
 
     def test_training_validation_true(self):
         result = JournalService.training_sets_validation(

@@ -20,6 +20,17 @@ class TestExercise:
         with pytest.raises(ValueError):
             Exercise(name='Ex 1', repeats=(-1, 1, 1))
 
+    @pytest.mark.parametrize(
+        "name,repeats,out",
+        [
+            ("pull-ups", (1,), "pull-ups 1"),
+            ("squads", (1, 2, 3), "squads 1/2/3")
+        ]
+    )
+    def test_str(self, name, repeats, out):
+        ex = Exercise(name=name, repeats=repeats)
+        assert str(ex) == out
+
 
 class TestRoute:
     def test_route_creation(self):
@@ -40,6 +51,26 @@ class TestRoute:
     def test_flash_err(self):
         with pytest.raises(ValueError):
             Route(grade='6a', falls=1, flash=True)
+
+    @pytest.mark.parametrize(
+        "grade,falls,flash,red_point,out",
+        [
+            ("6a", False, False, False, "6a"),
+            ("6a+", False, False, False, "6a+"),
+            ("6a+", True, False, False, "6a+:"),
+            ("6a", 1, False, False, "6a:1"),
+            ("6a", False, True, False, "6a f"),
+            ("6a", False, False, True, "6a rp"),
+        ]
+    )
+    def test_str(self, grade, falls, flash, red_point, out):
+        route = Route(
+            grade=grade,
+            falls=falls,
+            flash=flash,
+            red_point=red_point,
+        )
+        assert str(route) == out
 
 
 class TestRow:
@@ -63,6 +94,21 @@ class TestRow:
         content = request.getfixturevalue(fix_name)
         row = Row(content=content)
         assert row.training_category == training_cat
+
+    @pytest.mark.parametrize(
+        "content,comments,out",
+        [
+            ([Route(grade="6a")], "-", "6a"),
+            ([Route(grade="6a"), Route(grade="6a")], "-", "6a, 6a"),
+            ([Route(grade="6a"), Route(grade="6a")], "my comment", "6a, 6a — my comment"),
+            ([Exercise(name="ex 1", repeats=(100,))], "-", "ex 1 100"),
+            ([Exercise(name="ex 1", repeats=(1, 2, 3))], "-", "ex 1 1/2/3"),
+            ([Exercise(name="ex 1", repeats=(1, 2, 3))], "my comment", "ex 1 1/2/3 — my comment"),
+        ]
+    )
+    def test_str(self, content, comments, out):
+        row = Row(content=content, comments=comments)
+        assert str(row) == out
 
 class TestTrain:
     def test_train_creation(self, row_exercises, row_routes):
@@ -90,6 +136,19 @@ class TestTrain:
         assert len(t.get_rows) == 0
         t.add_row(row_routes)
         assert len(t.get_rows) == 1
+
+    @pytest.mark.parametrize(
+        "tr_type,rows,comments,out",
+        [
+            (TrainingType.LEAD, [Row([Route(grade="6a")])], "-", "Трудность\n6a"),
+            (TrainingType.BOULDER, [Row([Route(grade="6a")])], "abc", "Боулдер\n6a\nКомментарии: abc"),
+            (TrainingType.GPP, [Row([Exercise("ex", repeats=(1, 2, 3))])], "-", "ОФП\nex 1/2/3"),
+            (TrainingType.SFP, [Row([Exercise("ex", repeats=(1,))])], "abc", "СФП\nex 1\nКомментарии: abc"),
+        ]
+    )
+    def test_str(self, tr_type, rows, comments, out):
+        t = ClimbTrain(type=tr_type, rows=rows, comments=comments)
+        assert str(t) == out
 
 
 class TestWorkout:
@@ -119,6 +178,23 @@ class TestWorkout:
 
         w.add_train(train_climb_fill)
         assert len(w.get_content) == 1
+
+    @pytest.mark.parametrize(
+        "date,content,comments,out",
+        [
+            (dt.date(2026, 5, 5), [], "-", "05.05.2026"),
+            (dt.date(2026, 5, 5), [ClimbTrain(TrainingType.LEAD)], "-", "05.05.2026\nТрудность"),
+            (
+                dt.date(2026, 5, 5),
+                [ClimbTrain(TrainingType.BOULDER, [Row([Route("6a")]), Row([Route("6a")])])],
+                "abc",
+                "05.05.2026\nБоулдер\n6a\n6a\nКомментарии: abc"
+            )
+        ]
+    )
+    def test_str(self, date, content, comments, out):
+        w = Workout(date=date, content=content, comments=comments)
+        assert str(w) == out
 
 
 class TestJournal:
@@ -165,3 +241,21 @@ class TestJournal:
         j = Journal()
         with pytest.raises(TypeError):
             j.add_workout(123) # type: ignore
+
+    @pytest.mark.parametrize(
+        "content,comments,out",
+        [
+            ([], "-", "Дневник ...-...\n \nНет тренировок."),
+            (
+                [
+                    Workout(date=dt.date(2026, 5, 1), content=[ClimbTrain(TrainingType.LEAD)]),
+                    Workout(date=dt.date(2026, 5, 5), content=[ClimbTrain(TrainingType.BOULDER)]),
+                ],
+                "my comments",
+                "Дневник 01.05.2026-05.05.2026\nКомментарии: my comments\n \n01.05.2026\nТрудность\n——————————\n05.05.2026\nБоулдер"
+            )
+        ]
+    )
+    def test_str(self, content, comments, out):
+        j = Journal(content=content, comments=comments)
+        assert str(j) == out
