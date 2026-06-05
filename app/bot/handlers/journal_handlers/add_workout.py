@@ -84,10 +84,14 @@ async def process_add_workout_command(
         logger.info(f"Добавлен новый журнал для юзера id={user_id}")
         user = await user_service.get_user_assured(user_id)
 
+    journal = await journal_service.get_journal(user.last_journal)
+    text = FSM_ADD_TRAIN["fsm_add_date"] + "\n\n" + \
+        FSM_ADD_TRAIN["chosen_journal"].format(journal.preview)
+
     await state.update_data(journal_no=user.last_journal)
     await state.set_state(FSMFillWorkout.add_date)
     await message.answer(
-        text=FSM_ADD_TRAIN["fsm_add_date"],
+        text=text,
         reply_markup=date_kboard,
     )
 

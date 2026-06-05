@@ -45,14 +45,17 @@ class JournalRepository:
         self.db = db
 
     async def add_journal(
-        self, user_id: int,
-        comments:str = "",
+        self,
+        user_id: int,
+        name: str = "",
+        comments: str = "",
         period: tuple[dt.date | None, dt.date | None] = (None, None),
     ) -> None:
         """Создает новый пустой journal в таблице journals базы данных."""
+        logger.info("CREATE JOURNAL, args: %s", (user_id, name, comments, *period))
         await self.db.execute(
             INSERT_JOURNAL,
-            (user_id, comments, *period),
+            (user_id, name, comments, *period),
         )
 
     async def add_workout(

@@ -48,11 +48,20 @@ class JournalService:
         self.user_repo = user_repo
         self.journal_repo = journal_repo
 
-    async def add_journal(self, tg_id: int, comments:str = '') -> None:
+    async def add_journal(
+            self,
+            tg_id: int,
+            name: str = "",
+            comments:str = ''
+        ) -> None:
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
-        await self.journal_repo.add_journal(user_id=user['id'], comments=comments)
+        await self.journal_repo.add_journal(
+            user_id=user['id'],
+            name=name,
+            comments=comments,
+        )
 
     async def add_workout(
         self,
@@ -81,6 +90,12 @@ class JournalService:
         if not user:
             raise UserNotFoundError(tg_id)
         return await self.journal_repo.get_journals(user['id'])
+
+    async def get_journal(self, journal_id: int) -> DBJournal:
+        journal = await self.journal_repo.get_journal(journal_id)
+        if journal is None:
+            raise ValueError("Journal not Found")
+        return journal
 
     async def get_complete_journal(self, journal_id: int) -> Journal | None:
         """Возвращает Journal пользователя."""

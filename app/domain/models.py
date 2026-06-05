@@ -77,6 +77,7 @@ class DBJournal:
 
     id: int
     user_id: int
+    name: str
     comments: str
     period_start: dt.date | None
     period_end: dt.date | None
@@ -97,6 +98,19 @@ class DBJournal:
         ])
         return "{} - {}".format(*dates)
 
+    @property
+    def preview(self):
+        if self.period_start:
+            return "; ".join(x for x in (self.name, self.dates) if x)
+        if self.name:
+            return self.name
+        if self.comments:
+            return (
+                self.comments if len(self.comments) < 15
+                else self.comments[:13] + "..."
+            )
+
+        return f"Пустой журнал, id={self.id}"
 
 @dataclass
 class DBWorkout:
@@ -151,6 +165,7 @@ class DBRow:
 class Journal:
     """Container of multiple workout sessions."""
 
+    name: str = ""
     content: list[Workout] = field(default_factory=list)
     comments: str = ""
 
@@ -189,7 +204,7 @@ class Journal:
         else:
             content: str = "Нет тренировок."
 
-        return "\n".join(x for x in (date, comments, " ", content) if x)
+        return "\n".join(x for x in (date, self.name, comments, " ", content) if x)
 
     def __len__(self) -> int:
         return len(self.content)

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS journals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
+    name TEXT,
     comments TEXT,
     period_start DATE,
     period_end DATE,
@@ -121,8 +122,8 @@ VALUES (?, ?);
 """
 
 INSERT_JOURNAL = """
-INSERT INTO journals (user_id, comments, period_start, period_end)
-VALUES (?, ?, ?, ?);
+INSERT INTO journals (user_id, name, comments, period_start, period_end)
+VALUES (?, ?, ?, ?, ?);
 """
 
 INSERT_WORKOUT = """
