@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable
 
-from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
+from app.domain.models import (User, ClimbTrain, DBJournal, DBRow, DBTrain,
                                DBWorkout, Exercise, GymTrain, Journal, Route,
                                Row, Train, Workout)
 
@@ -29,14 +29,22 @@ class UserRepository:
             (tg_id, username),
         )
 
-    async def get_user_by_tg(self, tg_id: int) -> dict | None:
+    async def get_all_users(self) -> Iterable[User]:
+        users = await self.db.fetchall(
+            """SELECT *
+            FROM users
+            """
+        )
+        return tuple(User(**u) for u in users)
+
+    async def get_user_by_tg(self, tg_id: int) -> User | None:
         """Get user from table users by his telegram id."""
         user = await self.db.fetchone(
             GET_USER_BY_TG_ID,
             (tg_id, ),
         )
 
-        return dict(user) if user else None
+        return User(**user) if user else None
 
 class JournalRepository:
     """Интерфейс для работы с таблицей journals и связанными."""

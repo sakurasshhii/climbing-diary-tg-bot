@@ -24,6 +24,11 @@ async def process_start_command(message: Message, user_service: UserService) -> 
             message.from_user.id,
             message.from_user.username,
         )
+    else:
+        raise ValueError("No user info!")
+
+    # users = await user_service.get_all_users()
+    # logger.info("CURRENT USERS: %s", users)
     await message.answer(text=MAIN_MENU_MSG["/start"])
 
 @commands_router.message(Command(commands=["help"]))

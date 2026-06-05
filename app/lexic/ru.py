@@ -84,6 +84,7 @@ FSM_ADD_TRAIN: dict[str, str] = {
         "Проверьте формат и попробуйте еще раз."
     ),
     "error_invalid_sets": INVALID_CONTENT,
+    "fsm_pick_journal": "Выберите журнал для записи тренировки:",
     "fsm_add_date": "Выберите дату тренировки:",
     "fsm_other_date": "Введите дату в формате «YYYY-MM-DD», например: «2026-04-02».",
     "fsm_add_train_type": "Выберите тип тренировки:",

@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Iterable
 
 from app.domain.enums import TrainingCategory, TrainingType
@@ -9,6 +10,9 @@ from app.infrastructure.database.repo import JournalRepository, UserRepository
 from .parser import JournalParser
 
 
+logger = logging.getLogger(__name__)
+
+
 class UserService:
     def __init__(self, user_repo: UserRepository) -> None:
         self.user_repo = user_repo
@@ -16,29 +20,31 @@ class UserService:
     async def add_user(self, tg_id: int, username: str | None) -> None:
         await self.user_repo.add_user(tg_id=tg_id, username=username)
 
-    async def get_user(self, tg_id: int) -> User | None:
-        req = await self.user_repo.get_user_by_tg(tg_id=tg_id)
-        if not req:
-            return
+    async def get_all_users(self) -> Iterable[User]:
+        users = await self.user_repo.get_all_users()
+        return users
 
-        user = User(
-            id = req['id'],
-            tg_id = req['tg_id'],
-            username = req['username'],
-            last_journal = req['last_journal']
-        )
-        return user
+    async def get_user(self, tg_id: int) -> User | None:
+        return await self.user_repo.get_user_by_tg(tg_id=tg_id)
 
     async def get_user_assured(self, tg_id: int, username='') -> User:
         user = await self.get_user(tg_id)
         if user:
             return user
 
-        await self.add_user(
-            tg_id=tg_id,
-            username=username
-        )
-        return await self.get_user(tg_id) # type: ignore
+        n = 0
+        while user is None:
+            n += 1
+            if n == 5:
+                logger.warning("DATABASE PROBLEM: can't add user to db :(")
+                raise RuntimeError
+            await self.add_user(
+                tg_id=tg_id,
+                username=username
+            )
+            user = await self.get_user(tg_id)
+
+        return user
 
 class JournalService:
     def __init__(
@@ -58,7 +64,7 @@ class JournalService:
         if not user:
             raise UserNotFoundError(tg_id)
         await self.journal_repo.add_journal(
-            user_id=user['id'],
+            user_id=user.id,
             name=name,
             comments=comments,
         )
@@ -89,12 +95,16 @@ class JournalService:
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
-        return await self.journal_repo.get_journals(user['id'])
+
+        journals = await self.journal_repo.get_journals(user.id)
+        logger.info("JOURNALS: %s", tuple(journals))
+        return journals
 
     async def get_journal(self, journal_id: int) -> DBJournal:
         journal = await self.journal_repo.get_journal(journal_id)
         if journal is None:
-            raise ValueError("Journal not Found")
+            logger.exception("Journal not found: %s", journal_id)
+            raise ValueError("Journal not found")
         return journal
 
     async def get_complete_journal(self, journal_id: int) -> Journal | None:

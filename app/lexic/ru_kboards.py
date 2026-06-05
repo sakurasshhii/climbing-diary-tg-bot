@@ -19,3 +19,8 @@ TRAIN_TYPE_GYM: dict[str, str] = {
     'SFP': 'СФП',
     'GPP': 'ОФП'
 }
+PICK_JOURNAL: dict[str, str] = {
+    "last_journal": "Последний журнал",
+    "new_journal": "Новый журнал",
+    "select_journal": "Выбрать из списка"
+}

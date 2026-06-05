@@ -7,7 +7,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal
 from app.lexic.ru_kboards import (TRAIN_CATEGORY, TRAIN_TYPE_CLIMB,
-                                  TRAIN_TYPE_GYM, WORKOUT_DATE, WORKOUT_WRITE)
+                                  TRAIN_TYPE_GYM, WORKOUT_DATE, WORKOUT_WRITE,
+                                  PICK_JOURNAL)
 
 # ———————————————————————————— FSM date ——————————————————————————————————
 date_buttons = [
@@ -74,9 +75,25 @@ def journals_as_buttons(journals: Iterable[DBJournal]) -> Iterable[InlineKeyboar
     ]
 
 def get_journals_kb(journals: Iterable[DBJournal]) -> InlineKeyboardMarkup:
+    "Get keyboard from journals list."
     buttons = journals_as_buttons(journals)
     journals_kb_builder = InlineKeyboardBuilder()
     journals_kb_builder.row(*buttons)
     journals_kb_builder.adjust(1)
 
     return journals_kb_builder.as_markup()
+
+pick_journal_bttns: Iterable[InlineKeyboardButton] = [
+    InlineKeyboardButton(
+        text = t,
+        callback_data=key
+    ) for key, t in PICK_JOURNAL.items()
+]
+
+def get_pick_j_kb() -> InlineKeyboardMarkup:
+    "Get kb for chose: last j / new j / select j."
+    journ_kb_builder = InlineKeyboardBuilder()
+    journ_kb_builder.row(*pick_journal_bttns)
+    journ_kb_builder.adjust(1)
+
+    return journ_kb_builder.as_markup()
