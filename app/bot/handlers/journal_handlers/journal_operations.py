@@ -73,7 +73,7 @@ async def process_show_journal(
         return
 
     await message.answer(
-        text="JOURNAL IN TXT DOC —>",
+        text=CHECK_JOURNAL["journal_in_doc"].format(journal.dates),
         reply_markup=ReplyKeyboardRemove()
     )
     await message.answer_document(

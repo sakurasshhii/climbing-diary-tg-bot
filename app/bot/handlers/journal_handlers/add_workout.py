@@ -31,6 +31,7 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
+from app.bot.helper.parser import MessageParser
 from app.bot.keyboards.journal_keyboards import (check_kboard, date_kboard,
                                                  train_cat_kboard,
                                                  train_type_kboard)
@@ -216,10 +217,14 @@ async def process_add_train_comment(message: Message, state: FSMContext) -> None
     """Step 5. Add comment to the train."""
     await state.update_data(comments=message.text)
     await state.set_state(FSMFillWorkout.check)
-    data: FSMWorkoutData = cast("FSMWorkoutData", await state.get_data())
+    data: FSMWorkoutDataComplete = cast(
+        "FSMWorkoutDataComplete",
+        await state.get_data(),
+    )
 
+    workout = MessageParser.prettify_FSM_workout_data(data)
     await message.answer(
-        text=FSM_ADD_TRAIN["fsm_to_check"].format(data),
+        text=FSM_ADD_TRAIN["fsm_to_check"].format(workout), ########################
         reply_markup=check_kboard)
 
 # ———————————————————————————— 7.check ———————————————————————————————

@@ -96,7 +96,7 @@ FSM_ADD_TRAIN: dict[str, str] = {
     "fsm_to_check": "Ваша тренировка:\n\n{}",
     "fsm_complete": "Данные записаны.",
     "fsm_check_incorrect": (
-        "Добавление тренировки отменено. "
+        "Добавление тренировки отменено.\n\n"
         "В будущем можно будет исправить неверно записанные данные, "
         "а пока предлагаем внести тренировку еще раз."
     ),
@@ -108,5 +108,6 @@ FSM_ADD_TRAIN_CAT: dict[TrainingCategory, dict[str, str]] = {
 }
 
 CHECK_JOURNAL: dict[str, str] = {
-"select_journal": "Выберите тренировочный дневник:",
+    "select_journal": "Выберите тренировочный дневник:",
+    "journal_in_doc": "Ваш тренировочный дневник за {} 👇",
 }

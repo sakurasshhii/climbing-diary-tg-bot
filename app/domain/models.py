@@ -169,6 +169,10 @@ class Journal:
             return (self.content[0].date, self.content[-1].date)
         return (None, None)
 
+    @property
+    def dates(self) -> str:
+        return "-".join(d.strftime(DATE_FORMAT) if d else "..." for d in self.period)
+
     def add_workout(self, workout: Workout) -> None:
         if not isinstance (workout, Workout):
             raise TypeError("Journal could contain Workout objects only.")
@@ -178,11 +182,7 @@ class Journal:
             self.content.sort(key=lambda x: x.date)
 
     def __str__(self) -> str:
-        date_st, date_en = (
-            date.strftime(DATE_FORMAT) if date else "..."
-            for date in self.period
-        )
-        date: str = "Дневник {}-{}".format(date_st, date_en)
+        date: str = "Дневник " + self.dates
         comments: str = f"Комментарии: {self.comments}" if self.comments else ""
         if self.content:
             content: str = "\n——————————\n".join(str(x) for x in self.content)
@@ -278,15 +278,9 @@ class Train:
                 return GymTrain(type, rows, comments)
 
     def __str__(self) -> str:
-        tr_type = {
-            TrainingType.LEAD: "Трудность",
-            TrainingType.BOULDER: "Боулдер",
-            TrainingType.GPP: "ОФП",
-            TrainingType.SFP: "СФП",
-        }
         content: str = "\n".join(str(r) for r in self.rows)
         comments = f"Комментарии: {self.comments}" if self.comments else ""
-        data = [x for x in (tr_type[self.type], content, comments) if x]
+        data = [x for x in (self.type.translator, content, comments) if x]
 
         return "\n".join(data)
 
