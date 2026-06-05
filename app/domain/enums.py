@@ -17,7 +17,10 @@ class TrainingType(Enum):
         }
         return tr_types[self]
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> fef7848d8f5855871c4906a23f233dd9f64493a1
 class TrainingCategory(Enum):
     CLIMBING = 'Climbing'
     GYM = 'Gym'
