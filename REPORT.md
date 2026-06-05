@@ -69,7 +69,7 @@ ncalls  tottime  percall  cumtime  percall filename:lineno(function)
 15000    0.296    0.000    1.058    0.000 app\infrastructure\database\repo.py:158(get_journal_full)
 36000    0.054    0.000    0.161    0.000 app\domain\models.py:340(__post_init__)
 
-## app/services/parser.py — JournalParser.parse_rows
+## app/services/parser.py — JournalParser.parse_rows (training_category=TrainingCategory.CLIMBING)
 
 ###### Описание
 
@@ -92,3 +92,19 @@ ncalls  tottime  percall  cumtime  percall filename:lineno(function)
 1000000    0.837    0.000    0.837    0.000 {method 'fullmatch' of 're.Pattern' objects}
 2702306    0.525    0.000    0.525    0.000 {built-in method builtins.isinstance}
 100000    0.184    0.000    0.217    0.000 app\domain\models.py:312(__post_init__)
+
+## app/services/parser.py — JournalParser.parse_rows (training_category=TrainingCategory.GYM)
+
+###### Описание
+
+Из отчета cProfile видно, что функция отрабатывает в разы быстрее, чем аналог для скалолазных тренировок. Разница более, чем в 100 раз. При этом, временные затраты непосредственно на обработку текста минимальные, так же как и на создание доменных моделей.
+
+###### Предложения по улучшению
+
+Считаю, что функция работает оптимально, дальнейшее усовершенствование излишне.
+
+###### Вырезка из отчета cProfile
+
+ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    1    0.000    0.000    0.008    0.008 C:\Users\ARINA\PyProjects\climbing-diary-tg-bot\app\services\parser.py:16(parse_rows)
+    1    0.002    0.002    0.008    0.008 C:\Users\ARINA\PyProjects\climbing-diary-tg-bot\app\services\parser.py:72(_parse_rows_gym)
