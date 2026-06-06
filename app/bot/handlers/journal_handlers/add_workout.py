@@ -78,7 +78,7 @@ async def process_add_workout_command(
     user_id = message.from_user.id  # type: ignore[union-attr]
     user = await user_service.get_user_assured(user_id)
 
-    if user.last_journal == 0:
+    if not user.last_journal:
         await message.answer(FSM_ADD_TRAIN["error_journal_0"])
         await journal_service.add_journal(user_id)
         logger.info(f"Добавлен новый журнал для юзера id={user_id}")
