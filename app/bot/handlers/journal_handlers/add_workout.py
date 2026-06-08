@@ -79,7 +79,7 @@ async def process_add_workout_command(
         )
 
         await state_pick_j_set_next(
-            tg_id,
+            user.last_journal,
             state,
             message,
             journal_service,
@@ -105,6 +105,7 @@ async def process_pick_journal(
     await cback.answer()
     message = assure_callback_message(cback)
     tg_id = cback.from_user.id # type: ignore
+    user = await user_service.get_user_assured(tg_id)
 
     if cback.data == "select_journal":
             journals: Iterable[DBJournal] = await journal_service.get_journals(tg_id)
@@ -115,7 +116,7 @@ async def process_pick_journal(
             return
 
     await state_pick_j_set_next(
-        tg_id,
+        user.last_journal,
         state,
         message,
         journal_service,
@@ -130,6 +131,7 @@ async def process_picked_journal(
     cback: CallbackQuery,
     state: FSMContext,
     journal_service: JournalService,
+    user_service: UserService,
 ) -> None:
     await cback.answer()
     message = assure_callback_message(cback)
@@ -139,6 +141,7 @@ async def process_picked_journal(
         state,
         message,
         journal_service,
+        user_service
     )
 
 # ———————————————————————————— 2.date ———————————————————————————————

@@ -95,10 +95,11 @@ async def process_j_comments(
     )
 
     await journal_service.add_journal(tg_id, data["journal_name"], data["journal_comments"])
-    logger.info(f"Добавлен новый журнал для юзера id={tg_id}")
+    user = await user_service.get_user_assured(tg_id)
+    logger.info(f"Добавлен новый журнал для юзера id={user}")
 
     await state_pick_j_set_next(
-        tg_id=tg_id,
+        user.last_journal,
         state=state,
         message=message,
         journal_service=journal_service,

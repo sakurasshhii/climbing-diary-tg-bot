@@ -68,7 +68,7 @@ check_kboard = InlineKeyboardMarkup(
 def journals_as_buttons(journals: Iterable[DBJournal]) -> Iterable[InlineKeyboardButton]:
     return [
         InlineKeyboardButton(
-            text=journal.dates,
+            text=journal.preview,
             callback_data=str(journal.id),
         )
         for journal in journals

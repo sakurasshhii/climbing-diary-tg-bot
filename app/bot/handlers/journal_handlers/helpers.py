@@ -26,18 +26,17 @@ async def state_add_date_set_next(
     )
 
 async def state_pick_j_set_next(
-    tg_id: int,
+    journal_id: int,
     state: FSMContext,
     message: Message,
     journal_service: JournalService,
     user_service: UserService,
 ) -> None:
-    user = await user_service.get_user_assured(tg_id)
-    journal = await journal_service.get_journal(user.last_journal)
 
-    await state.update_data(journal_no=user.last_journal)
+    await state.update_data(journal_no=journal_id)
     await state.set_state(FSMFillWorkout.add_date)
 
+    journal = await journal_service.get_journal(journal_id)
     text = FSM_ADD_TRAIN["chosen_journal"].format(journal.preview) + "\n\n" + \
         FSM_ADD_TRAIN["fsm_add_date"]
     await message.answer(
