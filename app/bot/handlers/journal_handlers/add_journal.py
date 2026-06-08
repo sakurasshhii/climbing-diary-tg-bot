@@ -19,7 +19,7 @@ from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
 from app.bot.states.add_workout import FSMFillWorkout
 from app.bot.states.edit_journal import FSMNewJournal, FSMNewJournalComplete
-from app.lexic.ru import CHECK_JOURNAL, FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT
+from app.lexic.ru import ADD_JOURNAL
 from app.services.services import JournalService, UserService
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ async def process_j_input_name(
     message = assure_callback_message(cback)
 
     await state.set_state(FSMNewJournal.input_name)
-    await message.answer(text="Введите название журнала тренировок 2 < символов < 16.")
+    await message.answer(text=ADD_JOURNAL["input_name"])
 
 @journal_add_router.message(
     StateFilter(FSMNewJournal.input_name),
@@ -53,13 +53,13 @@ async def process_j_name(
     name = message.text if message.text else ""
 
     if len(name) > 15:
-        await message.answer(text=f"Слишком длинное название. Сократите до 15 символов: {name[:15] + "."}")
+        await message.answer(text=ADD_JOURNAL["name_too_long"].format(name[:15] + "."))
     elif len(name) < 2:
-        await message.answer(text="Название журнала должно иметь длину от 2 до 15 символов.")
+        await message.answer(text=ADD_JOURNAL["name_too_short"])
     else:
         await state.update_data(journal_name=name)
         await state.set_state(FSMNewJournal.input_comment)
-        await message.answer(text=f"Название журнала: {name}. Укажите комментарии или впишите прочерк...")
+        await message.answer(text=ADD_JOURNAL["input_comments"].format(name))
 
 @journal_add_router.message(
     StateFilter(FSMNewJournal.input_comment),
@@ -84,6 +84,7 @@ async def process_j_comments(
     )
 
     await journal_service.add_journal(tg_id, data["journal_name"], data["journal_comments"])
+    await message.answer(text=ADD_JOURNAL["completed"].format(data["journal_name"], data["journal_comments"]))
     user = await user_service.get_user_assured(tg_id)
     logger.info(f"Добавлен новый журнал для юзера id={user}")
 

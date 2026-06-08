@@ -23,7 +23,7 @@ from app.bot.handlers.journal_handlers.validators import (
 from app.bot.keyboards.journal_keyboards import get_journals_kb
 from app.bot.states.edit_journal import FSMGetJournal
 from app.domain.models import DBJournal, Journal
-from app.lexic.ru import CHECK_JOURNAL
+from app.lexic.ru import GET_JOURNAL
 from app.services.services import JournalService
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ async def process_my_journal(
 
     await state.set_state(FSMGetJournal.select_journal)
     await message.answer(
-        text=CHECK_JOURNAL['select_journal'],
+        text=GET_JOURNAL['select_journal'],
         reply_markup=get_journals_kb(journals)
     )
 
@@ -74,7 +74,7 @@ async def process_show_journal(
         return
 
     await message.answer(
-        text=CHECK_JOURNAL["journal_in_doc"].format(journal.dates),
+        text=GET_JOURNAL["journal_in_doc"].format(journal.dates),
         reply_markup=ReplyKeyboardRemove()
     )
     await message.answer_document(

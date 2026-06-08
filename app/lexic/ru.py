@@ -105,7 +105,15 @@ FSM_ADD_TRAIN_CAT: dict[TrainingCategory, dict[str, str]] = {
     TrainingCategory.GYM: {"fsm_add_content": ADD_CONTENT_GYM}
 }
 
-CHECK_JOURNAL: dict[str, str] = {
+GET_JOURNAL: dict[str, str] = {
     "select_journal": "Выберите тренировочный дневник:",
     "journal_in_doc": "Ваш тренировочный дневник за {} 👇",
+}
+
+ADD_JOURNAL: dict[str, str] = {
+    "input_name" : "Введите название журнала тренировок 2 < символов < 16.",
+    "name_too_long": "Слишком длинное название. Сократите до 15 символов: {}",
+    "name_too_short": "Название журнала должно иметь длину от 2 до 15 символов.",
+    "input_comments": "Укажите комментарии или впишите прочерк...",
+    "completed": "Журнал добавлен: {}."
 }

@@ -45,7 +45,7 @@ from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
                                         FSMWorkoutDataComplete)
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal
-from app.lexic.ru import CHECK_JOURNAL, FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT
+from app.lexic.ru import GET_JOURNAL, FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT
 from app.services.services import JournalService, UserService
 
 logger = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ async def process_pick_journal(
     if cback.data == "select_journal":
             journals: Iterable[DBJournal] = await journal_service.get_journals(tg_id)
             await message.edit_text(
-                text=CHECK_JOURNAL['select_journal'],
+                text=GET_JOURNAL['select_journal'],
                 reply_markup=get_journals_kb(journals)
             )
             return
