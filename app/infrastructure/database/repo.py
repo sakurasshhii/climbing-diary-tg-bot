@@ -4,7 +4,7 @@ import datetime as dt
 import json
 import logging
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 
 from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
                                DBWorkout, Exercise, GymTrain, Journal, Route,
@@ -159,7 +159,7 @@ class JournalRepository:
 
         return DBJournal(**dict(journal))
 
-    async def get_journals(self, user_id: int) -> Iterable[DBJournal]:
+    async def get_journals(self, user_id: int) -> Sequence[DBJournal]:
         """Возвращает все journals пользователя по его id."""
         journals = await self.db.fetchall(
             GET_JOURNALS,

@@ -83,17 +83,32 @@ def get_journals_kb(journals: Iterable[DBJournal]) -> InlineKeyboardMarkup:
 
     return journals_kb_builder.as_markup()
 
-pick_journal_bttns: Iterable[InlineKeyboardButton] = [
-    InlineKeyboardButton(
-        text = t,
-        callback_data=key
-    ) for key, t in PICK_JOURNAL.items()
-]
+def get_pick_journal_bttns(has_last: bool, has_choice: bool) -> Iterable[InlineKeyboardButton]:
+    buttons = [InlineKeyboardButton(
+        text=PICK_JOURNAL["new_journal"],
+        callback_data="new_journal")
+    ]
+    if has_last:
+        buttons.append(InlineKeyboardButton(
+            text=PICK_JOURNAL["last_journal"],
+            callback_data="last_journal")
+        )
+    if has_last:
+        buttons.append(InlineKeyboardButton(
+            text=PICK_JOURNAL["select_journal"],
+            callback_data="select_journal")
+        )
 
-def get_pick_j_kb() -> InlineKeyboardMarkup:
-    "Get kb for chose: last j / new j / select j."
+    return buttons
+
+def get_pick_j_kb(has_last=True, has_choice=True) -> InlineKeyboardMarkup:
+    """Get kb for chose: last j / new j / select j.
+
+    has_last — if user have user.last_journal [last_journal bttn].
+    has_choice — if user have any created journals [select_journal bttn].
+    """
     journ_kb_builder = InlineKeyboardBuilder()
-    journ_kb_builder.row(*pick_journal_bttns)
+    journ_kb_builder.row(*get_pick_journal_bttns(has_last, has_choice))
     journ_kb_builder.adjust(1)
 
     return journ_kb_builder.as_markup()

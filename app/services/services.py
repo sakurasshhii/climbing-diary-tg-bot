@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.exceptions import UserNotFoundError
@@ -97,7 +97,7 @@ class JournalService:
             workout=workout
         )
 
-    async def get_journals(self, tg_id: int) -> Iterable[DBJournal]:
+    async def get_journals(self, tg_id: int) -> Sequence[DBJournal]:
         """Возвращает все journals пользователя по его id."""
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:

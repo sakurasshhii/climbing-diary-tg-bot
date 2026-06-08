@@ -37,15 +37,14 @@ from app.bot.handlers.journal_handlers.helpers import (state_add_date_set_next,
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
 from app.bot.helper.parser import MessageParser
-from app.bot.keyboards.journal_keyboards import (check_kboard,
-                                                 get_journals_kb,
+from app.bot.keyboards.journal_keyboards import (check_kboard, get_journals_kb,
                                                  get_pick_j_kb,
                                                  train_type_kboard)
 from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
                                         FSMWorkoutDataComplete)
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal
-from app.lexic.ru import GET_JOURNAL, FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT
+from app.lexic.ru import FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT, GET_JOURNAL
 from app.services.services import JournalService, UserService
 
 logger = logging.getLogger(__name__)
@@ -54,7 +53,6 @@ workout_router = Router()
 
 # ———————————————————————————— FSM —————————————————————————————————————
 # ———————————————————————————— 1.journal ———————————————————————————————
-# to do!!!!!!!: добавить выбор журнала перед записью тренировки
 @workout_router.message(Command("add_workout"), StateFilter(default_state))
 async def process_add_workout_command(
     message: Message,
@@ -62,15 +60,20 @@ async def process_add_workout_command(
     user_service: UserService,
     journal_service: JournalService,
 ) -> None:
-    """doc
+    """Команда /add_workout.
+
+    Выбор журнала: переход к следующему состоянию, добавление клавиатуры.
+    Для новых пользователей журнал создается автоматически.
     """
+
     message = assure_message_from_user_id(message)
 
     tg_id = message.from_user.id  # type: ignore[union-attr]
     user = await user_service.get_user_assured(tg_id)
     await state.set_state(FSMFillWorkout.select_journal)
+    journals = await journal_service.get_journals(tg_id)
 
-    if not user.last_journal:
+    if not user.last_journal and not len(journals):
         await message.answer(FSM_ADD_TRAIN["error_journal_0"])
         await journal_service.add_journal(tg_id)
         user = await user_service.get_user_assured(tg_id)
@@ -91,12 +94,15 @@ async def process_add_workout_command(
     else:
         await message.answer(
             text=FSM_ADD_TRAIN["fsm_pick_journal"],
-            reply_markup=get_pick_j_kb(),
+            reply_markup=get_pick_j_kb(
+                has_last=bool(user.last_journal),
+                has_choice=(len(journals) > 0),
+            ),
         )
 
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.select_journal),
-    F.data.in_(["new_journal", "last_journal", "select_journal"]),
+    F.data.in_(["last_journal", "select_journal"]),
 )
 async def process_pick_journal(
     cback: CallbackQuery,
@@ -107,7 +113,6 @@ async def process_pick_journal(
     await cback.answer()
     message = assure_callback_message(cback)
     tg_id = cback.from_user.id # type: ignore
-    user = await user_service.get_user_assured(tg_id)
 
     if cback.data == "select_journal":
             journals: Iterable[DBJournal] = await journal_service.get_journals(tg_id)
@@ -115,15 +120,16 @@ async def process_pick_journal(
                 text=GET_JOURNAL['select_journal'],
                 reply_markup=get_journals_kb(journals)
             )
-            return
 
-    await state_pick_j_set_next(
-        user.last_journal, # type: ignore
-        state,
-        message,
-        journal_service,
-        user_service,
-    )
+    else:
+        user = await user_service.get_user_assured(tg_id)
+        await state_pick_j_set_next(
+            user.last_journal, # type: ignore
+            state,
+            message,
+            journal_service,
+            user_service,
+        )
 
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.select_journal),
