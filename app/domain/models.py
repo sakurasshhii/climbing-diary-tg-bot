@@ -100,9 +100,9 @@ class DBJournal:
 
     @property
     def preview(self):
-        if self.period_start:
-            return "; ".join(x for x in (self.name, self.dates) if x)
         if self.name:
+            if self.period_start:
+                return f"{self.name} ({self.dates})"
             return self.name
         if self.comments:
             return (
