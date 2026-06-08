@@ -101,9 +101,14 @@ class DBJournal:
     @property
     def preview(self):
         if self.name:
+    
             if self.period_start:
                 return f"{self.name} ({self.dates})"
             return self.name
+
+        if self.dates:
+            return self.dates
+
         if self.comments:
             return (
                 self.comments if len(self.comments) < 15
