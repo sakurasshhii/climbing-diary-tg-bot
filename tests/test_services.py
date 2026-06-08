@@ -136,7 +136,7 @@ class TestJournalService:
 
     @pytest.mark.asyncio
     async def test_get_complete_journal_not_found(self, journal_repo, journal_service):
-        journal_repo.get_journal_full.return_value = None
+        journal_repo.get_complete_journal.return_value = None
 
         with pytest.raises(ValueError, match="Journal not found"):
             await journal_service.get_complete_journal(1)
@@ -148,7 +148,7 @@ class TestJournalService:
         journal_service,
         workout_climb
     ) -> None:
-        journal_repo.get_journal_full.return_value = Journal(
+        journal_repo.get_complete_journal.return_value = Journal(
             content=[workout_climb, workout_climb],
             comments="my comment"
         )
