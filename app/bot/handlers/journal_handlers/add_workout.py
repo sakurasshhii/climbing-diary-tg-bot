@@ -67,8 +67,8 @@ async def finish_state_pick_j(
     journal_service: JournalService,
 ) -> None:
     journal = await journal_service.get_journal(last_journal)
-    text = FSM_ADD_TRAIN["fsm_add_date"] + "\n\n" + \
-        FSM_ADD_TRAIN["chosen_journal"].format(journal.preview)
+    text = FSM_ADD_TRAIN["chosen_journal"].format(journal.preview) + "\n\n" + \
+        FSM_ADD_TRAIN["fsm_add_date"]
 
     await state.update_data(journal_no=last_journal)
     await state.set_state(FSMFillWorkout.add_date)

@@ -20,15 +20,14 @@ undefined_router = Router()
 async def process_start_command(message: Message, user_service: UserService) -> None:
     """/start."""
     if message.from_user:
-        await user_service.add_user(
-            message.from_user.id,
-            message.from_user.username,
-        )
+        if not await user_service.get_user(tg_id=message.from_user.id):
+            await user_service.add_user(
+                message.from_user.id,
+                message.from_user.username,
+            )
     else:
         raise ValueError("No user info!")
 
-    # users = await user_service.get_all_users()
-    # logger.info("CURRENT USERS: %s", users)
     await message.answer(text=MAIN_MENU_MSG["/start"])
 
 @commands_router.message(Command(commands=["help"]))

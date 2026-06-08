@@ -19,6 +19,10 @@ class UserService:
     
     async def add_user(self, tg_id: int, username: str | None) -> None:
         await self.user_repo.add_user(tg_id=tg_id, username=username)
+        # logger.info(
+        #     "AFTER INSERT USER: %s",
+        #     await self.user_repo.get_all_users()
+        # )
 
     async def get_all_users(self) -> Iterable[User]:
         users = await self.user_repo.get_all_users()

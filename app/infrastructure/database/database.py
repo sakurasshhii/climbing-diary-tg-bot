@@ -21,6 +21,7 @@ class Database:
         commit: bool = True,
     ) -> aiosqlite.Cursor:
         """Для запросов: INSERT, UPDATE, DELETE, CREATE TABLE."""
+        # logger.info("Connection object id=%s", id(self.conn))
         result = await self.conn.execute(query, params or [])
         if commit:
             await self.conn.commit()

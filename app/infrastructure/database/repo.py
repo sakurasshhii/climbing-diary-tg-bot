@@ -35,6 +35,7 @@ class UserRepository:
             FROM users
             """
         )
+
         return tuple(User(**u) for u in users)
 
     async def get_user_by_tg(self, tg_id: int) -> User | None:
