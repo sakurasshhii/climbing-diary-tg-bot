@@ -8,10 +8,20 @@ import pytest
 
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import (ClimbTrain, Exercise, GymTrain, Journal, Route,
-                               Row, Workout)
+                               Row, Workout, User)
 from app.infrastructure.database.repo import JournalRepository, UserRepository
 from app.services.services import JournalService, UserService
 
+
+# —————————————————————————— DB models —————————————————————————
+@pytest.fixture
+def default_user() -> User:
+    return User(**{
+            "id": 1,
+            "tg_id": 123,
+            "username": "arina",
+            "last_journal": None,
+        })
 
 # —————————————————————————— models ————————————————————————————
 @pytest.fixture

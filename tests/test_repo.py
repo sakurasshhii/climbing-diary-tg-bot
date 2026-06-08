@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from app.domain.models import User
 from app.infrastructure.database.repo import UserRepository
 from app.infrastructure.database.sql_models import (GET_USER_BY_TG_ID,
                                                     INSERT_JOURNAL,
@@ -19,11 +20,12 @@ class TestUserRepo:
 
     @pytest.mark.asyncio
     async def test_get_user_by_tg_ok(self, user_repo_db):
-        user_data = {
-            "id": 1,
-            "tg_id": 123,
-            "username": "arina",
-        }
+        user_data = dict(
+            id=1,
+            tg_id=123,
+            username="arina",
+            last_journal=None,
+        )
         user_repo_db.db.fetchone.return_value = user_data
         result = await user_repo_db.get_user_by_tg(123)
     
@@ -31,7 +33,7 @@ class TestUserRepo:
             GET_USER_BY_TG_ID,
             (123,),
         )
-        assert result == user_data
+        assert result == User(**user_data)
 
     @pytest.mark.asyncio
     async def test_get_user_by_tg_none(self, user_repo_db):
@@ -53,7 +55,7 @@ class TestJournalRepo:
 
         journal_repo_db.db.execute.assert_awaited_once_with(
             INSERT_JOURNAL,
-            (123, "", None, None)
+            (123, "", "", None, None)
         )
     
     @pytest.mark.asyncio

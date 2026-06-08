@@ -31,7 +31,7 @@ class UserService:
     async def get_user(self, tg_id: int) -> User | None:
         return await self.user_repo.get_user_by_tg(tg_id=tg_id)
 
-    async def get_user_assured(self, tg_id: int, username='') -> User:
+    async def get_user_assured(self, tg_id: int, username="") -> User:
         user = await self.get_user(tg_id)
         if user:
             return user

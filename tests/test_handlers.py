@@ -10,6 +10,8 @@ from app.lexic.ru import MAIN_MENU_MSG, UNDEFINED
 class TestCommands:
     @pytest.mark.asyncio
     async def test_proc_start_cmd(self, message, user_service_empty):
+        message.from_user.return_value = True
+        user_service_empty.get_user.return_value = False
         await process_start_command(message, user_service_empty)
         user_service_empty.add_user.assert_awaited_once_with(
             message.from_user.id,
@@ -20,12 +22,22 @@ class TestCommands:
         )
 
     @pytest.mark.asyncio
-    async def test_proc_start_no_user(self, message_empty, user_service_empty):
+    async def test_proc_start_has_user(self, message, user_service_empty):
+        message.from_user.return_value = True
+        user_service_empty.get_user.return_value = True
+        await process_start_command(message, user_service_empty)
+        user_service_empty.add_user.assert_not_awaited()
+        message.answer.assert_awaited_once_with(
+            text=MAIN_MENU_MSG["/start"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_proc_start_no_user_info(self, message_empty, user_service_empty):
         message_empty.from_user = None
-        await process_start_command(message_empty, user_service_empty)
+        with pytest.raises(ValueError):
+            await process_start_command(message_empty, user_service_empty)
 
         user_service_empty.add_user.assert_not_awaited()
-        message_empty.answer.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_proc_help_cmd(self, message, user_service_empty):

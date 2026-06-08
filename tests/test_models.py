@@ -200,8 +200,7 @@ class TestWorkout:
 class TestJournal:
     def test_journal_creation(self, workout_climb, workout_gym):
         assert Journal() is not None
-        assert Journal([workout_climb])
-        assert Journal([workout_climb, workout_gym])
+        assert Journal(content=[workout_climb]).content == [workout_climb]
 
     @pytest.mark.parametrize('comment', ["", "-"])
     def test_no_comments(self, comment):

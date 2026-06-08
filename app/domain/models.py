@@ -68,7 +68,7 @@ class User:
     id: int
     tg_id: int
     username: str
-    last_journal: int
+    last_journal: int | None
 
 
 @dataclass
