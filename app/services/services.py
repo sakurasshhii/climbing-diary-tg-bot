@@ -116,7 +116,7 @@ class JournalService:
 
     async def get_complete_journal(self, journal_id: int) -> Journal | None:
         """Возвращает Journal пользователя."""
-        journal = await self.journal_repo.get_journal_full(journal_id)
+        journal = await self.journal_repo.get_complete_journal(journal_id)
         if journal is None:
             raise ValueError("Journal not found")
 

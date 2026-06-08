@@ -167,7 +167,7 @@ class JournalRepository:
         )
         return tuple(DBJournal(**j) for j in journals)
 
-    async def get_journal_full(self, journal_id: int) -> Journal | None:
+    async def get_complete_journal(self, journal_id: int) -> Journal | None:
         """Собирает и возвращает Journal с полной информацией о тренировках."""
         async with Transaction(self.db) as db:
             db_journal = await db.fetchone(GET_J_FROM_JOURNALS, (journal_id,))
@@ -232,6 +232,7 @@ class JournalRepository:
             ))
 
         return Journal(
+            name = db_journal.name,
             content=workouts,
             comments=db_journal.comments or ""
         )

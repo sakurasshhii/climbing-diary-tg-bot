@@ -228,14 +228,15 @@ class Journal:
             self.content.sort(key=lambda x: x.date)
 
     def __str__(self) -> str:
-        date: str = "Дневник " + self.dates
+        name: str = self.name + " " if self.name else "Дневник "
+        head: str = name + self.dates
         comments: str = f"Комментарии: {self.comments}" if self.comments else ""
         if self.content:
             content: str = "\n——————————\n".join(str(x) for x in self.content)
         else:
             content: str = "Нет тренировок."
 
-        return "\n".join(x for x in (date, self.name, comments, " ", content) if x)
+        return "\n".join(x for x in (head, comments, " ", content) if x)
 
     def __len__(self) -> int:
         return len(self.content)
