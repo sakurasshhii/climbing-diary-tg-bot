@@ -6,32 +6,21 @@
     >>> FSMNewJournalComplete
 """
 
-import datetime as dt
 import logging
 from typing import cast
-from collections.abc import Iterable
 
 from aiogram import F, Router
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message
 
+from app.bot.handlers.journal_handlers.helpers import state_pick_j_set_next
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
-from app.bot.handlers.journal_handlers.helpers import state_pick_j_set_next, state_add_date_set_next
-from app.bot.helper.parser import MessageParser
-from app.bot.keyboards.journal_keyboards import (
-    check_kboard, date_kboard, train_cat_kboard, train_type_kboard,
-    get_pick_j_kb, get_journals_kb)
-from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
-                                        FSMWorkoutDataComplete)
+from app.bot.states.add_workout import FSMFillWorkout
 from app.bot.states.edit_journal import FSMNewJournal, FSMNewJournalComplete
-from app.domain.enums import TrainingCategory, TrainingType
-from app.domain.models import User, DBJournal
-from app.lexic.ru import FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT, CHECK_JOURNAL
+from app.lexic.ru import CHECK_JOURNAL, FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT
 from app.services.services import JournalService, UserService
-
 
 logger = logging.getLogger(__name__)
 journal_add_router = Router()
@@ -99,7 +88,7 @@ async def process_j_comments(
     logger.info(f"Добавлен новый журнал для юзера id={user}")
 
     await state_pick_j_set_next(
-        user.last_journal,
+        user.last_journal, # type: ignore
         state=state,
         message=message,
         journal_service=journal_service,

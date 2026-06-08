@@ -4,7 +4,7 @@ import logging
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bot.keyboards.journal_keyboards import (date_kboard, train_cat_kboard)
+from app.bot.keyboards.journal_keyboards import date_kboard, train_cat_kboard
 from app.bot.states.add_workout import FSMFillWorkout
 from app.lexic.ru import FSM_ADD_TRAIN
 from app.services.services import JournalService, UserService

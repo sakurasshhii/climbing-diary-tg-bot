@@ -1,7 +1,7 @@
 from .commands import commands_router, undefined_router
+from .journal_handlers.add_journal import journal_add_router
 from .journal_handlers.add_workout import workout_router
 from .journal_handlers.get_journal import journal_get_router
-from .journal_handlers.add_journal import journal_add_router
 
 __all__ = ['routers']
 

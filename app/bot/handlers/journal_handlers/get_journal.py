@@ -2,9 +2,12 @@
 Get information from DB.
 
 /my_journal — get & show user's journal.
+
+———————————————— FSM schema ————————————————
 1. select a journal
 2. print / send file
 """
+
 import logging
 from collections.abc import Iterable
 
@@ -15,15 +18,13 @@ from aiogram.fsm.state import default_state
 from aiogram.types import (BufferedInputFile, CallbackQuery, Message,
                            ReplyKeyboardRemove)
 
-from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
 from app.bot.keyboards.journal_keyboards import get_journals_kb
 from app.bot.states.edit_journal import FSMGetJournal
-from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal, Journal
 from app.lexic.ru import CHECK_JOURNAL
-from app.services.services import JournalService, UserService
+from app.services.services import JournalService
 
 logger = logging.getLogger(__name__)
 journal_get_router = Router()

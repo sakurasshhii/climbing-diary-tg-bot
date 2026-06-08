@@ -6,9 +6,9 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal
-from app.lexic.ru_kboards import (TRAIN_CATEGORY, TRAIN_TYPE_CLIMB,
-                                  TRAIN_TYPE_GYM, WORKOUT_DATE, WORKOUT_WRITE,
-                                  PICK_JOURNAL)
+from app.lexic.ru_kboards import (PICK_JOURNAL, TRAIN_CATEGORY,
+                                  TRAIN_TYPE_CLIMB, TRAIN_TYPE_GYM,
+                                  WORKOUT_DATE, WORKOUT_WRITE)
 
 # ———————————————————————————— FSM date ——————————————————————————————————
 date_buttons = [

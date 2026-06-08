@@ -5,7 +5,7 @@ import pytest
 
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.exceptions import UserNotFoundError
-from app.domain.models import Journal, User, DBJournal
+from app.domain.models import DBJournal, Journal, User
 from app.services.services import JournalService
 
 

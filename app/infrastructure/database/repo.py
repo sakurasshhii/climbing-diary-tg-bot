@@ -6,9 +6,9 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable
 
-from app.domain.models import (User, ClimbTrain, DBJournal, DBRow, DBTrain,
+from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
                                DBWorkout, Exercise, GymTrain, Journal, Route,
-                               Row, Train, Workout)
+                               Row, Train, User, Workout)
 
 from .database import Database, Transaction
 from .sql_models import *
@@ -214,7 +214,7 @@ class JournalRepository:
                 trains_by_workout[tr.id].append(
                     Train.from_training_category(
                         training_category=tr.category,
-                        type=tr.type,
+                        tr_type=tr.type,
                         rows=rows_by_train[tr.id],
                         comments=tr.comments or "",
                     )

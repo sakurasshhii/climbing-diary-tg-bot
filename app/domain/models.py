@@ -4,25 +4,51 @@
 2. Классы, формирующие тренировочный журнал длительностью (описывают тр. цикл).
 
 ———————————————————————————— Structure ———————————————————————————
-
 Journal(
-    content: list = [Workout(), ...],        # all trainings in training cycle
-    period: tuple[dt.date, dt.date],         # start & end date — property
-    comments: str | None = None,             # comments to the whole journal
+    *name: str,                              # Journal name (optional)
+    *content: list[Workout(), ...],          # all trainings in training cycle
+    *period: tuple[dt.date, dt.date],        # start & end date — property
+    *comments: str,                          # comments to the whole journal
 )
+
 Workout(
     date: dt.date,
-    content: list[Train] = [
-        ClimbTrain(
-            type: lead | boulder,
-            sets: [Row([Route(rate[str], falls[int], flash[int]), ...], *comments), ...],
-        ),
-        GymTrain(
-            type: GPP | SFP,
-            sets: [Row([Exercise(name[str], repeats), ...], *comments), ...],
+    *content: list[
+        Train(                               # ClimbTrain or GymTrain
+            training_category: TrainingCategory,
+            type: TrainingType,
+            *rows: list[
+                Row(
+                    content: Sequence,
+                    *comments,
+                    *training_category,
+                )
+            ],
+            *comments
         )
-    ],
-    *comments: str | None = None
+    ]
+)
+
+ClimbTrain(
+    tr_type: lead | boulder,
+    *rows: [Row[Route]],
+)
+
+GymTrain(
+    tr_type: GPP | SFP,
+    *rows: [Row[Exercise]],
+)
+
+Route(
+    grade: str,
+    *falls: int | bool,
+    *flash: bool,
+    *red_point: bool,
+)
+
+Exercise(
+    name: str,
+    repeats: Sequence[int]
 )
 
 * - not necessarily arguments
@@ -34,9 +60,6 @@ Exercise_sets (exercise_id, weight, reps, order)
 2. Добавить возможность круговой тренировки.
 На данный момент Exercise всегда существует в Set в одном экземпляре,
     т.е. в одном подходе могут быть повторы только одного упражнения.
-
-3. Добавить журналам название (name) — для более удобного поиска.
-На данный момент поиск организован по датам, что особенно неудобно для давних журналов.
 """
 
 from __future__ import annotations
@@ -290,15 +313,15 @@ class Train:
     def from_training_category(
         cls,
         training_category: TrainingCategory,
-        type: TrainingType,
+        tr_type: TrainingType,
         rows: list[Row] = field(default_factory=list),
         comments: str = "",
     ) -> ClimbTrain | GymTrain:
         match training_category:
             case TrainingCategory.CLIMBING:
-                return ClimbTrain(type, rows, comments)
+                return ClimbTrain(tr_type, rows, comments)
             case TrainingCategory.GYM:
-                return GymTrain(type, rows, comments)
+                return GymTrain(tr_type, rows, comments)
 
     def __str__(self) -> str:
         content: str = "\n".join(str(r) for r in self.rows)
@@ -378,18 +401,21 @@ class Route:
 
         return self.grade + info if info else self.grade
 
+
 @dataclass(frozen=True)
 class Exercise:
     """Exercise in set of GPP/SFP training."""
 
     name: str
-    repeats: tuple[int, ...]
+    repeats: Sequence[int]
 
     def __post_init__(self) -> None:
         if not self.name:
             raise ValueError("Invalid input: empty name")
         if not self.repeats or any(x <= 0 for x in self.repeats):
             raise ValueError(f"Invalid repeats: {self.repeats}")
+
+        object.__setattr__(self, "repeats", tuple(self.repeats))
 
     def __str__(self) -> str:
         repeats = REP_DELIMITER.join(str(n) for n in self.repeats)

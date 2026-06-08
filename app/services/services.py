@@ -9,7 +9,6 @@ from app.infrastructure.database.repo import JournalRepository, UserRepository
 
 from .parser import JournalParser
 
-
 logger = logging.getLogger(__name__)
 
 
