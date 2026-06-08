@@ -15,9 +15,11 @@
     (write text: routes / workouts as in the example)
 6. add comment
     (write any text)
+    >>> FSMWorkoutDataComplete
 7. check
     (returns journal workout & update DB if it's ok)
 """
+
 import datetime as dt
 import logging
 from typing import cast
@@ -32,6 +34,7 @@ from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
+from app.bot.handlers.journal_handlers.helpers import state_pick_j_set_next, state_add_date_set_next
 from app.bot.helper.parser import MessageParser
 from app.bot.keyboards.journal_keyboards import (
     check_kboard, date_kboard, train_cat_kboard, train_type_kboard,
@@ -47,36 +50,6 @@ logger = logging.getLogger(__name__)
 workout_router = Router()
 
 
-# ———————————————————————————— helper ——————————————————————————————————
-async def set_date_state(
-    date: dt.date,
-    state: FSMContext,
-    message: Message,
-) -> None:
-    await state.update_data(workout_date=date)
-    await state.set_state(FSMFillWorkout.add_train_type)
-    await message.answer(
-        text=FSM_ADD_TRAIN["fsm_add_train_type"],
-        reply_markup=train_cat_kboard,
-    )
-
-async def finish_state_pick_j(
-    last_journal: int,
-    state: FSMContext,
-    message: Message,
-    journal_service: JournalService,
-) -> None:
-    journal = await journal_service.get_journal(last_journal)
-    text = FSM_ADD_TRAIN["chosen_journal"].format(journal.preview) + "\n\n" + \
-        FSM_ADD_TRAIN["fsm_add_date"]
-
-    await state.update_data(journal_no=last_journal)
-    await state.set_state(FSMFillWorkout.add_date)
-    await message.answer(
-        text=text,
-        reply_markup=date_kboard,
-    )
-
 # ———————————————————————————— FSM —————————————————————————————————————
 # ———————————————————————————— 1.journal ———————————————————————————————
 # to do!!!!!!!: добавить выбор журнала перед записью тренировки
@@ -91,25 +64,26 @@ async def process_add_workout_command(
     """
     message = assure_message_from_user_id(message)
 
-    user_id = message.from_user.id  # type: ignore[union-attr]
-    user = await user_service.get_user_assured(user_id)
+    tg_id = message.from_user.id  # type: ignore[union-attr]
+    user = await user_service.get_user_assured(tg_id)
     await state.set_state(FSMFillWorkout.select_journal)
 
     if not user.last_journal:
         await message.answer(FSM_ADD_TRAIN["error_journal_0"])
-        await journal_service.add_journal(user_id)
-        user = await user_service.get_user_assured(user_id)
+        await journal_service.add_journal(tg_id)
+        user = await user_service.get_user_assured(tg_id)
         logger.info(
             "Добавлен новый журнал для юзера id=%s, journal_id=%s",
-            user_id,
+            tg_id,
             user.last_journal
         )
 
-        await finish_state_pick_j(
-            user.last_journal,
+        await state_pick_j_set_next(
+            tg_id,
             state,
             message,
             journal_service,
+            user_service,
         )
 
     else:
@@ -132,11 +106,7 @@ async def process_pick_journal(
     message = assure_callback_message(cback)
     tg_id = cback.from_user.id # type: ignore
 
-    match cback.data:
-        case "new_journal":
-            await journal_service.add_journal(tg_id)
-            logger.info(f"Добавлен новый журнал для юзера id={tg_id}")
-        case "select_journal":
+    if cback.data == "select_journal":
             journals: Iterable[DBJournal] = await journal_service.get_journals(tg_id)
             await message.edit_text(
                 text=CHECK_JOURNAL['select_journal'],
@@ -144,12 +114,12 @@ async def process_pick_journal(
             )
             return
 
-    user = await user_service.get_user_assured(tg_id)
-    await finish_state_pick_j(
-        user.last_journal,
+    await state_pick_j_set_next(
+        tg_id,
         state,
         message,
         journal_service,
+        user_service,
     )
 
 @workout_router.callback_query(
@@ -164,7 +134,7 @@ async def process_picked_journal(
     await cback.answer()
     message = assure_callback_message(cback)
 
-    await finish_state_pick_j(
+    await state_pick_j_set_next(
         int(cback.data), # type: ignore
         state,
         message,
@@ -186,7 +156,7 @@ async def process_add_date_press(cback: CallbackQuery, state: FSMContext) -> Non
     if cback.data == "yesterday":
         date -= dt.timedelta(days=1)
 
-    await set_date_state(state=state, date=date, message=message)
+    await state_add_date_set_next(state=state, date=date, message=message)
 
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.add_date),
@@ -213,7 +183,7 @@ async def process_add_date_other(message: Message, state: FSMContext) -> None:
     except ValueError:
         await message.answer(FSM_ADD_TRAIN["error_invalid_date"])
     else:
-        await set_date_state(state=state, date=date, message=message)
+        await state_add_date_set_next(state=state, date=date, message=message)
 
 @workout_router.message(
         StateFilter(FSMFillWorkout.add_date),

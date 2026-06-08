@@ -19,14 +19,14 @@ from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
 from app.bot.keyboards.journal_keyboards import get_journals_kb
-from app.bot.states.get_journal import FSMGetJournal
+from app.bot.states.edit_journal import FSMGetJournal
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal, Journal
 from app.lexic.ru import CHECK_JOURNAL
 from app.services.services import JournalService, UserService
 
 logger = logging.getLogger(__name__)
-journal_router = Router()
+journal_get_router = Router()
 
 
 # ———————————————————————————— helper ————————————————————————————————————
@@ -34,7 +34,7 @@ journal_router = Router()
 # ———————————————————————————— FSM ———————————————————————————————————————
 # ———————————————————————————— 1.select ——————————————————————————————————
 
-@journal_router.message(Command('my_journal'), StateFilter(default_state))
+@journal_get_router.message(Command('my_journal'), StateFilter(default_state))
 async def process_my_journal(
     message: Message,
     state: FSMContext,
@@ -53,7 +53,7 @@ async def process_my_journal(
     )
 
 # ———————————————————————————— 2.send ——————————————————————————————————
-@journal_router.callback_query(StateFilter(FSMGetJournal.select_journal))
+@journal_get_router.callback_query(StateFilter(FSMGetJournal.select_journal))
 async def process_show_journal(
     cback: CallbackQuery,
     state: FSMContext,

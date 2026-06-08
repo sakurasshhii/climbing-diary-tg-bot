@@ -177,6 +177,9 @@ class Journal:
 
         if self.comments == "-":
             self.comments = ""
+        
+        if self.name == "-":
+            self.name = ""
 
     @property
     def period(self) -> tuple[dt.date | None, dt.date | None]:

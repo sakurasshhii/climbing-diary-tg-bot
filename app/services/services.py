@@ -62,11 +62,15 @@ class JournalService:
             self,
             tg_id: int,
             name: str = "",
-            comments:str = ''
+            comments: str = "",
         ) -> None:
         user = await self.user_repo.get_user_by_tg(tg_id)
         if not user:
             raise UserNotFoundError(tg_id)
+
+        if comments in ("-", "—"):
+            comments = ""
+
         await self.journal_repo.add_journal(
             user_id=user.id,
             name=name,
