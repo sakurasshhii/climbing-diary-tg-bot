@@ -42,6 +42,7 @@ from app.bot.keyboards.journal_keyboards import (check_kboard, get_journals_kb,
                                                  train_type_kboard)
 from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
                                         FSMWorkoutDataComplete)
+from app.bot.filters.dates_filter import IsCorrectDate
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal
 from app.lexic.ru import FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT, GET_JOURNAL
@@ -185,16 +186,14 @@ async def process_add_date_press_other(cback: CallbackQuery) -> None:
 
 @workout_router.message(
     StateFilter(FSMFillWorkout.add_date),
-    F.text.regexp(r"^\d{4}-\d{2}-\d{2}$")) # to do!!! add date filter
-async def process_add_date_other(message: Message, state: FSMContext) -> None:
+    IsCorrectDate()) # to do!!! add date filter
+async def process_add_date_other(
+    message: Message,
+    state: FSMContext,
+    date: dt.date
+) -> None:
     message = assure_message_from_user_id(message)
-
-    try:
-        date = dt.date.fromisoformat(message.text or "")
-    except ValueError:
-        await message.answer(FSM_ADD_TRAIN["error_invalid_date"])
-    else:
-        await state_add_date_set_next(state=state, date=date, message=message)
+    await state_add_date_set_next(state=state, date=date, message=message)
 
 @workout_router.message(
         StateFilter(FSMFillWorkout.add_date),
@@ -285,7 +284,7 @@ async def process_add_train_comment(message: Message, state: FSMContext) -> None
 
     workout = MessageParser.prettify_FSM_workout_data(data)
     await message.answer(
-        text=FSM_ADD_TRAIN["fsm_to_check"].format(workout), ########################
+        text=FSM_ADD_TRAIN["fsm_to_check"].format(workout),
         reply_markup=check_kboard)
 
 # ———————————————————————————— 7.check ———————————————————————————————
