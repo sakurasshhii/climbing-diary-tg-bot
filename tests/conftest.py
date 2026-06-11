@@ -30,7 +30,7 @@ def new_date() -> dt.date:
 
 @pytest.fixture
 def route() -> Route:
-    return Route(grade='6a', falls=0, flash=False)
+    return Route(grade='6a', falls_no=0, flash=False)
 
 @pytest.fixture
 def exercise() -> Exercise:

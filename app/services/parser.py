@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 class JournalParser:
     """Workout parser to get info from user message."""
 
+    PATTERN_ROUTE = re.compile(r"(?P<grade>[4-9][abcабс]\+?)(?P<falls>:(?P<falls_no>\d+)?)?(?P<flash>\sf)?(?P<rp>\srp)?")
+
     @classmethod
     def parse_rows(cls, text: str, training_category: TrainingCategory) -> Sequence[Row]:
         """Extract gym/climbing training rows from user's input."""
@@ -53,21 +55,18 @@ class JournalParser:
         6a:5 - 6а с пятью срывами
         """
 
-        match = re.fullmatch(
-            r'(?P<grade>[4-9][abcабс]\+?)(?P<falls>:(?P<falls_no>\d+)?)?(?P<flash>\sf)?(?P<rp>\srp)?',
-            raw_route
-        )
+        match = re.fullmatch(cls.PATTERN_ROUTE, raw_route)
         if not match or match["grade"] is None:
             raise ValueError(f"Incorrent climbing grade: {raw_route}")
 
         grade = match["grade"]
-        falls = bool(match["falls"])
-        if n := match["falls_no"]:
-            falls = int(n)
+        falls_no = 0
+        if bool(match["falls"]):
+            falls_no = int(match["falls_no"]) if match["falls_no"] else 1
         flash = bool(match["flash"])
         rp = bool(match["rp"])
 
-        return Route(grade=grade, falls=falls, flash=flash, red_point=rp)
+        return Route(grade=grade, falls_no=falls_no, flash=flash, red_point=rp)
 
     @classmethod
     def _parse_rows_gym(cls, text: str) -> Sequence[Row]:
@@ -116,7 +115,7 @@ class JournalParser:
                 raw_r = tuple(map(str.strip, data[0].split(",")))
                 for r in raw_r:
                     try:
-                        routes.append(JournalParser.get_route(r.strip()))
+                        routes.append(cls.get_route(r.strip()))
                     except ValueError:
                         logging.warning(f"Прервана операция парсинга: {text, r}")
                         return []

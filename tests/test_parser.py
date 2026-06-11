@@ -16,7 +16,7 @@ class TestParser:
 
     @pytest.mark.parametrize(
         "route",
-        "6d, 3a, 10b, 6a+: f, 6a f rp, 6a: rp, 6a: f rp, 6a d, 6a:100".split(", ")
+        "6d, 3a, 10b, 6a+: f, 6a f rp, 6a: rp, 6a: f rp, 6a d, 6a:-5".split(", ")
     )
     def test_get_route_invalid(self, route):
         with pytest.raises(ValueError):
@@ -31,7 +31,7 @@ class TestParser:
         TrainingCategory.CLIMBING,
         [
             Row([Route("6a"), Route("6a+")], "first"),
-            Row([Route("6b", falls=True), Route("6b", flash=True)], "second"),
+            Row([Route("6b", falls_no=True), Route("6b", flash=True)], "second"),
             Row([Route("6c", red_point=True)])
         ],
     ), (

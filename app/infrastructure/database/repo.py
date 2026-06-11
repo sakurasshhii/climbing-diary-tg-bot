@@ -131,7 +131,7 @@ class JournalRepository:
                                 raise TypeError
                             await db.execute(
                                 INSERT_ROUTE,
-                                (row_id, route_index, route.grade, route.falls, int(route.flash)),
+                                (row_id, route_index, route.grade, route.falls_no, int(route.flash)),
                                 commit=False,
                             )
 
@@ -187,7 +187,7 @@ class JournalRepository:
         for r in routes:
             route = Route(
                 grade=r["grade"],
-                falls=r["falls"],
+                falls_no=r["falls"],
                 flash=bool(r["flash"]),
             )
             routes_by_row[r["row_id"]].append(route)

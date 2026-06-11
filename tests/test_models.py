@@ -34,7 +34,7 @@ class TestExercise:
 
 class TestRoute:
     def test_route_creation(self):
-        assert Route(grade='6a', falls=0, flash=False)
+        assert Route(grade='6a', falls_no=0, flash=False)
 
     @pytest.mark.parametrize(
         'grade',
@@ -42,15 +42,15 @@ class TestRoute:
     )
     def test_grade_err(self, grade):
         with pytest.raises(ValueError):
-            Route(grade=grade, falls=0, flash=False)
+            Route(grade=grade, falls_no=0, flash=False)
 
     def test_falls_err(self):
         with pytest.raises(ValueError):
-            Route(grade='6a', falls=-1, flash=False)
+            Route(grade='6a', falls_no=-1, flash=False)
 
     def test_flash_err(self):
         with pytest.raises(ValueError):
-            Route(grade='6a', falls=1, flash=True)
+            Route(grade='6a', falls_no=1, flash=True)
 
     @pytest.mark.parametrize(
         "grade,falls,flash,red_point,out",
@@ -66,7 +66,7 @@ class TestRoute:
     def test_str(self, grade, falls, flash, red_point, out):
         route = Route(
             grade=grade,
-            falls=falls,
+            falls_no=falls,
             flash=flash,
             red_point=red_point,
         )

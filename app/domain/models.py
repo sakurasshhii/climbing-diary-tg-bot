@@ -83,6 +83,7 @@ logger = logging.getLogger(__name__)
 
 DATE_FORMAT = r"%d.%m.%Y"
 REP_DELIMITER = "/"
+PATTERN_ROUTE = r"\d[abcABC]\+?"
 
 # ———————————————————————————— 1. dataclasses as DB tables ———————————————————————————
 
@@ -378,28 +379,25 @@ class Route:
     """Route rate via French/Fontainebleau system."""
 
     grade: str                      # French grade from 5a to 9b+
-    falls: int | bool = False       # Count of falls in route before top
+    falls_no: int = 0               # Count of falls in route before top
     flash: bool = False             # Flash flag
     red_point: bool = False         # Red point flag
 
     def __post_init__(self) -> None:
-        if not re.fullmatch(r"\d[abcABC]\+?", self.grade):
+        if not re.fullmatch(PATTERN_ROUTE, self.grade):
             raise ValueError(f"Invalid grade: {self.grade}")
-        if not isinstance(self.falls, (int, bool)) or self.falls < 0 or self.falls > 50:
-            raise ValueError(f"Invalid falls count: {self.falls}")
-        if not isinstance(self.flash, bool) or self.flash and self.falls:
-            raise ValueError(f"Invalid flash flag: {self.flash}")
-        if not isinstance(self.red_point, bool) or \
-            self.red_point and self.falls or \
-            self.red_point and self.flash:
-            raise ValueError("Red point flag failed")
+        if self.falls_no < 0:
+            raise ValueError("Falls no. must be greater than -1.")
+        if (self.flash or self.red_point) and self.falls_no \
+            or self.flash and self.red_point:
+            raise ValueError(f"Incompatible flag: {str(self)}")
 
     def __str__(self) -> str:
         info = []
-        if self.falls:
+        if self.falls_no:
             info.append(":")
-            if not isinstance(self.falls, bool):
-                info.append(str(self.falls))
+            if not isinstance(self.falls_no, bool):
+                info.append(str(self.falls_no))
         info.append(" f") if self.flash else None
         info.append(" rp") if self.red_point else None
         info = "".join(info)
