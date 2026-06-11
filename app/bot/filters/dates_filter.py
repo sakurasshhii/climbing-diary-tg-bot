@@ -20,22 +20,3 @@ class IsCorrectDate(BaseFilter):
                 return False
 
         return False
-
-
-if __name__ == "__tests__":
-    filter = IsCorrectDate()
-    for date in (
-        "05.05.2026",
-        "05/05/2026",
-        "05-05-2026",
-        "05.05.9090",
-        "05.05.1001",
-        "05.05.25",
-        "6.8.26"
-    ):
-        print(filter(date), date)  # correct
-    for date in (
-        "13.13.2026",
-        "01.51.2026",
-    ):
-        print(filter(date), date)  # incorrect
