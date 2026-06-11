@@ -2,6 +2,8 @@
 
 1. Классы, существующие для представления информации из БД.
 2. Классы, формирующие тренировочный журнал длительностью (описывают тр. цикл).
+    Entities (Journal, Workout, Train, Row)
+    Value Objects (Route, Exercise)
 
 ———————————————————————————— Structure ———————————————————————————
 Journal(
@@ -77,7 +79,7 @@ from .enums import TrainingCategory, TrainingType
 logger = logging.getLogger(__name__)
 
 
-# ———————————————————————————— contstant —————————————————————————————————————————————
+# ——————————————————————————————— contstant ——————————————————————————————————————————
 
 DATE_FORMAT = r"%d.%m.%Y"
 REP_DELIMITER = "/"
@@ -188,6 +190,7 @@ class DBRow:
     comments: str
 
 # ———————————————————————————— 2. journal structure ——————————————————————————————————
+# ——————————————————————————————— Entities ———————————————————————————————————————————
 
 @dataclass
 class Journal:
@@ -368,6 +371,7 @@ class Row:
 
         return content + comments
 
+# ———————————————————————————— Value Objects ——————————————————————————————————
 
 @dataclass(frozen=True)
 class Route:

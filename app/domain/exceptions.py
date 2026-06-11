@@ -1,5 +1,5 @@
 class InvalidInputError(Exception):
-    def __init__(self, val: object, txt: str = '', *args: object) -> None:
+    def __init__(self, val: object, txt: str = "", *args: object) -> None:
         self.val = val
         self.txt = txt
     
