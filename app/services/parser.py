@@ -55,7 +55,7 @@ class JournalParser:
         6a:5 - 6а с пятью срывами
         """
 
-        match = re.fullmatch(cls.PATTERN_ROUTE, raw_route)
+        match = cls.PATTERN_ROUTE.fullmatch(raw_route)
         if not match or match["grade"] is None:
             raise ValueError(f"Incorrent climbing grade: {raw_route}")
 
@@ -109,13 +109,12 @@ class JournalParser:
             data = tuple(map(str.strip, line.split("-")))
 
             if len(data) > 1:
-                comments = "".join(data[1:]).strip()
+                comments = "-".join(data[1:])
 
             if data and data[0]:
-                raw_r = tuple(map(str.strip, data[0].split(",")))
-                for r in raw_r:
+                for r in map(str.strip, data[0].split(",")):
                     try:
-                        routes.append(cls.get_route(r.strip()))
+                        routes.append(cls.get_route(r))
                     except ValueError:
                         logging.warning(f"Прервана операция парсинга: {text, r}")
                         return []

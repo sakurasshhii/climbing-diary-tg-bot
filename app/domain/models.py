@@ -83,7 +83,7 @@ logger = logging.getLogger(__name__)
 
 DATE_FORMAT = r"%d.%m.%Y"
 REP_DELIMITER = "/"
-PATTERN_ROUTE = r"\d[abcABC]\+?"
+PATTERN_ROUTE = re.compile(r"\d[abcABC]\+?")
 
 # ———————————————————————————— 1. dataclasses as DB tables ———————————————————————————
 
@@ -374,7 +374,7 @@ class Row:
 
 # ———————————————————————————— Value Objects ——————————————————————————————————
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Route:
     """Route rate via French/Fontainebleau system."""
 
@@ -384,7 +384,7 @@ class Route:
     red_point: bool = False         # Red point flag
 
     def __post_init__(self) -> None:
-        if not re.fullmatch(PATTERN_ROUTE, self.grade):
+        if not PATTERN_ROUTE.fullmatch(self.grade):
             raise ValueError(f"Invalid grade: {self.grade}")
         if self.falls_no < 0:
             raise ValueError("Falls no. must be greater than -1.")
@@ -405,7 +405,7 @@ class Route:
         return self.grade + info if info else self.grade
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Exercise:
     """Exercise in set of GPP/SFP training."""
 
