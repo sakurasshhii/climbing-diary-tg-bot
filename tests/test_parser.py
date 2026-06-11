@@ -21,7 +21,7 @@ class TestParser:
     def test_get_route_invalid(self, route):
         with pytest.raises(ValueError):
             JournalParser.get_route(route)
-    
+
     @pytest.mark.parametrize(
     "text,training_cat,expected",
     [(

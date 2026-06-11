@@ -33,7 +33,7 @@ class TestUserRepo:
             GET_USER_BY_TG_ID,
             (123,),
         )
-        assert result == User(**user_data)
+        assert result == User(**user_data) # type: ignore
 
     @pytest.mark.asyncio
     async def test_get_user_by_tg_none(self, user_repo_db):
