@@ -38,8 +38,8 @@ journal_edit_router = Router()
 # ———————————————————————————— open menu kboard —————————————————————————
 @journal_edit_router.message(Command("edit_journals"), StateFilter(default_state))
 async def process_journal_menu(message: Message, state: FSMContext) -> None:
-    """Open redacting menu."""
-    message, tg_id = assure_message_from_user_id(message)
+    """Open journals' redacting menu."""
+    message, _ = assure_message_from_user_id(message)
     await state.set_state(FSMUserMenu.journal_menu)
 
     await message.answer(
@@ -47,6 +47,7 @@ async def process_journal_menu(message: Message, state: FSMContext) -> None:
         reply_markup=edit_journals_kb
     )
 
+# ———————————————————————————— edit journal —————————————————————————
 @journal_edit_router.callback_query(
     StateFilter(FSMUserMenu.journal_menu),
     F.data.in_(["edit_journal"]),)
@@ -63,6 +64,7 @@ async def process_edit_journal(
 
     await state.set_state(FSMEditJournal.select_journal)
 
+# ———————————————————————————— add_journal —————————————————————————
 @journal_edit_router.callback_query(
     StateFilter(FSMUserMenu.journal_menu),
     F.data.in_(["add_journal"]),)
@@ -79,6 +81,7 @@ async def process_add_journal(
 
     await state_add_journal_start(message, state)
 
+# ———————————————————————————— delete_journal —————————————————————————
 @journal_edit_router.callback_query(
     StateFilter(FSMUserMenu.journal_menu),
     F.data.in_(["delete_journal"]),)

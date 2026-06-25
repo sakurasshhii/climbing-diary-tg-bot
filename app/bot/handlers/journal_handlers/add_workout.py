@@ -72,6 +72,8 @@ async def process_add_workout_command(
 
     user = await user_service.get_user_assured(tg_id)
     await state.set_state(FSMFillWorkout.select_journal)
+    await state.update_data(add_workout=True)
+
     journals = await journal_service.get_journals(tg_id)
 
     if not user.last_journal and not len(journals):
@@ -169,6 +171,9 @@ async def process_add_date_press(cback: CallbackQuery, state: FSMContext) -> Non
         date -= dt.timedelta(days=1)
 
     await state_add_date_set_next(state=state, date=date, message=message)
+
+    state_data = await state.get_data()
+    logger.info("STATE DATA [process_add_date_press]: %s", state_data)
 
 @workout_router.callback_query(
     StateFilter(FSMFillWorkout.add_date),

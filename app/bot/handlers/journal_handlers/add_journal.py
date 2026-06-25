@@ -89,12 +89,15 @@ async def process_j_comments(
     state_data = await state.get_data()
     logger.info("STATE DATA: %s", state_data)
 
-    await state_pick_j_set_next(
-        user.last_journal, # type: ignore
-        state=state,
-        message=message,
-        journal_service=journal_service,
-        user_service=user_service,
-    )
-    ### TODO Сейчас универсальная функция добавления журнала
-    # перенаправляет пользователя на добавление тренировки (дата)
+    if state_data.get("add_workout", False) is True:   
+    # возвращает пользователя на добавление тренировки (дата)
+        await state_pick_j_set_next(
+            user.last_journal, # type: ignore
+            state=state,
+            message=message,
+            journal_service=journal_service,
+            user_service=user_service,
+        )
+
+    else:
+        await state.clear()
