@@ -31,18 +31,18 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 
+from app.bot.filters.handler_filters import IsCorrectDate
 from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.helpers import (state_add_date_set_next,
                                                        state_pick_j_set_next)
 from app.bot.handlers.journal_handlers.validators import (
-    assure_callback_message, assure_message_from_user_id)
+    assure_callback_message, assure_message_from_user_id, assure_callback_data)
 from app.bot.helper.parser import MessageParser
 from app.bot.keyboards.journal_keyboards import (check_kboard, get_journals_kb,
                                                  get_pick_j_kb,
                                                  train_type_kboard)
 from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
                                         FSMWorkoutDataComplete)
-from app.bot.filters.handler_filters import IsCorrectDate
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal
 from app.lexic.ru import FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT, GET_JOURNAL
@@ -216,10 +216,10 @@ async def process_add_train_cat(cback: CallbackQuery, state: FSMContext) -> None
     message = assure_callback_message(cback)
 
     try:
-        cback_data = cback.data or ""
+        cback_data = assure_callback_data(cback, raise_err=True)
         training_cat = TrainingCategory[cback_data.upper()]
     except KeyError:
-        logger.exception(f"Invalid TrainigCategory from cback: {cback.data}")
+        logger.exception(f"Invalid TrainigCategory from cback: {cback_data}")
         raise
 
     await state.update_data(training_category=training_cat)
@@ -236,7 +236,7 @@ async def process_add_train_type(cback: CallbackQuery, state: FSMContext) -> Non
 
     await message.edit_reply_markup()
 
-    cback_data: str = cback.data or ""
+    cback_data: str = assure_callback_data(cback, raise_err=True)
     await state.update_data(training_type=TrainingType[cback_data.upper()])
     data: FSMWorkoutData = cast("FSMWorkoutData", await state.get_data())
 

@@ -4,12 +4,14 @@ from app.bot.handlers import exceptions as exc
 
 
 def assure_message_from_user_id(message: Message) -> Message:
+    """Check if message has user info."""
     if not message.from_user or not message.from_user.id:
         raise exc.NoInfoFromUserError(__name__)
     
     return message
 
 def assure_callback_message(cback: CallbackQuery) -> Message:
+    """Check if cback has user info and message; returns cback.message."""
     if not cback.from_user:
         raise exc.NoInfoFromUserError(__name__)
     if (
@@ -21,3 +23,10 @@ def assure_callback_message(cback: CallbackQuery) -> Message:
         raise exc.MessageError(f'cback.message is None or isinstance(cback.message, InaccessibleMessage)')
     
     return cback.message
+
+def assure_callback_data(cback: CallbackQuery, raise_err: bool = False) -> str:
+    """Returns cback.data as str. Raises ValueError optionally."""
+    if raise_err and not cback.data:
+        raise ValueError("Missed cback.data")
+
+    return cback.data or ""

@@ -7,6 +7,8 @@ from aiogram.types import Message, CallbackQuery
 
 
 class IsCorrectDate(BaseFilter):
+    """Check if message.text is a correct date and return it back."""
+
     async def __call__(self, message: Message) -> bool | dict[str, dt.date]:
         date: str = message.text or ""
         match = re.fullmatch(r"(\d{1,2}).(\d{1,2}).(\d{2,4})", date)
@@ -23,7 +25,7 @@ class IsCorrectDate(BaseFilter):
         return False
 
 
-class Isalnum(BaseFilter):
+class IsDigit(BaseFilter):
     async def __call__(self, cback: CallbackQuery) -> bool:
         no: str = cback.data or ""
-        return no.isalnum()
+        return no.isdigit()

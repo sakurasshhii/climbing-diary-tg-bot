@@ -1,5 +1,4 @@
-"""
-Get information from DB.
+"""Module contains handlers to get information from DB.
 
 /my_journal — get & show user's journal.
 
@@ -18,11 +17,11 @@ from aiogram.fsm.state import default_state
 from aiogram.types import (BufferedInputFile, CallbackQuery, Message,
                            ReplyKeyboardRemove)
 
+from app.bot.filters.handler_filters import IsDigit
 from app.bot.handlers.journal_handlers.validators import (
-    assure_callback_message, assure_message_from_user_id)
+    assure_callback_data, assure_callback_message, assure_message_from_user_id)
 from app.bot.keyboards.journal_keyboards import get_journals_kb
 from app.bot.states.edit_journal import FSMGetJournal
-from app.bot.filters.handler_filters import Isalnum
 from app.domain.models import DBJournal, Journal
 from app.lexic.ru import GET_JOURNAL
 from app.services.services import JournalService
@@ -30,8 +29,6 @@ from app.services.services import JournalService
 logger = logging.getLogger(__name__)
 journal_get_router = Router()
 
-
-# ———————————————————————————— helper ————————————————————————————————————
 
 # ———————————————————————————— FSM ———————————————————————————————————————
 # ———————————————————————————— 1.select ——————————————————————————————————
@@ -57,25 +54,20 @@ async def process_my_journal(
 # ———————————————————————————— 2.send ——————————————————————————————————
 @journal_get_router.callback_query(
     StateFilter(FSMGetJournal.select_journal),
-    Isalnum(),
+    IsDigit(),
 )
 async def process_show_journal(
     cback: CallbackQuery,
     state: FSMContext,
     journal_service: JournalService
 ) -> None:
-    await cback.answer()
-    await state.clear()
     message = assure_callback_message(cback)
+    journal_id = int(assure_callback_data(cback))
+    await cback.answer()
 
-    if cback.data is None:
-        raise ValueError
-
-    journal: Journal | None = await journal_service.get_complete_journal(int(cback.data))
-
+    journal = await journal_service.get_complete_journal(journal_id)
     if journal is None:
-        await message.answer(text="NOT FOUND")
-        return
+        raise ValueError("PICKED JOURNAL NOT FOUND: %s", journal_id)
 
     await message.answer(
         text=GET_JOURNAL["journal_in_doc"].format(journal.dates),
@@ -87,3 +79,5 @@ async def process_show_journal(
             filename="my_journal.txt"
         )
     )
+
+    await state.clear()
