@@ -1,7 +1,7 @@
 import pytest
 import datetime as dt
 
-from app.bot.filters.handler_filters import IsCorrectDate
+from app.bot.filters.handler_filters import IsCorrectDate, IsDigit
 
 
 class TestFilterIsCorrectDate:
@@ -42,3 +42,23 @@ class TestFilterIsCorrectDate:
         message_empty.text = text
 
         assert await self.filter(message_empty) is False
+
+
+class TestFilterIsDigit:
+    filter = IsDigit()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "data,expected",
+        (
+            ("123", True),
+            ("0", True),
+            (None, False),
+            ("123abc", False),
+            ("", False)
+        )
+    )
+    async def test_filter_ok(self, cback_empty, data, expected):
+        cback_empty.data = data
+
+        assert await self.filter(cback_empty) is expected
