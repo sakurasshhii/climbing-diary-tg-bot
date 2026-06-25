@@ -32,6 +32,7 @@ async def state_pick_j_set_next(
     state: FSMContext,
     message: Message,
     journal_service: JournalService,
+    user_service: UserService,
 ) -> None:
 
     await state.update_data(journal_no=journal_id)

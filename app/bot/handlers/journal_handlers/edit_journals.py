@@ -82,7 +82,7 @@ async def process_add_journal(
 @journal_edit_router.callback_query(
     StateFilter(FSMUserMenu.journal_menu),
     F.data.in_(["delete_journal"]),)
-async def process_edit_journal(
+async def process_delete_journal(
     cback: CallbackQuery,
     state: FSMContext,
 ) -> None:
