@@ -4,7 +4,7 @@ import logging
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bot.keyboards.journal_keyboards import date_kboard, train_cat_kboard
+from app.bot.keyboards.journal_keyboards import date_kb, train_cat_kb
 from app.bot.states.add_workout import FSMFillWorkout
 from app.lexic.ru import FSM_ADD_TRAIN
 from app.services.services import JournalService, UserService
@@ -22,7 +22,7 @@ async def state_add_date_set_next(
     await state.set_state(FSMFillWorkout.add_train_type)
     await message.answer(
         text=FSM_ADD_TRAIN["fsm_add_train_type"],
-        reply_markup=train_cat_kboard,
+        reply_markup=train_cat_kb,
     )
 
 async def state_pick_j_set_next(
@@ -41,5 +41,5 @@ async def state_pick_j_set_next(
         FSM_ADD_TRAIN["fsm_add_date"]
     await message.answer(
         text=text,
-        reply_markup=date_kboard,
+        reply_markup=date_kb,
     )

@@ -1,9 +1,8 @@
 import datetime as dt
 import re
-from typing import Any
 
 from aiogram.filters import BaseFilter
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
 
 class IsCorrectDate(BaseFilter):

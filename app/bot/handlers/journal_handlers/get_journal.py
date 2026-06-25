@@ -20,7 +20,7 @@ from aiogram.types import (BufferedInputFile, CallbackQuery, Message,
 from app.bot.filters.handler_filters import IsDigit
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_data, assure_callback_message, assure_message_from_user_id)
-from app.bot.keyboards.journal_keyboards import get_journals_kb
+from app.bot.keyboards.journal_keyboards import build_journals_kb
 from app.bot.states.edit_journal import FSMGetJournal
 from app.domain.models import DBJournal, Journal
 from app.lexic.ru import GET_JOURNAL
@@ -47,7 +47,7 @@ async def process_my_journal(
     await state.set_state(FSMGetJournal.select_journal)
     await message.answer(
         text=GET_JOURNAL['select_journal'],
-        reply_markup=get_journals_kb(journals)
+        reply_markup=build_journals_kb(journals)
     )
 
 # ———————————————————————————— 2.send ——————————————————————————————————

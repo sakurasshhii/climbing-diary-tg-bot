@@ -1,5 +1,6 @@
-import pytest
 import datetime as dt
+
+import pytest
 
 from app.bot.filters.handler_filters import IsCorrectDate, IsDigit
 

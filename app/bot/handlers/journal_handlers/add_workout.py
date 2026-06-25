@@ -36,11 +36,12 @@ from app.bot.handlers import exceptions as exc
 from app.bot.handlers.journal_handlers.helpers import (state_add_date_set_next,
                                                        state_pick_j_set_next)
 from app.bot.handlers.journal_handlers.validators import (
-    assure_callback_message, assure_message_from_user_id, assure_callback_data)
+    assure_callback_data, assure_callback_message, assure_message_from_user_id)
 from app.bot.helper.parser import MessageParser
-from app.bot.keyboards.journal_keyboards import (check_kboard, get_journals_kb,
-                                                 get_pick_j_kb,
-                                                 train_type_kboard)
+from app.bot.keyboards.journal_keyboards import (add_workout_confirm_kb,
+                                                 build_journals_kb,
+                                                 build_pick_journal_kb,
+                                                 train_type_kb)
 from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
                                         FSMWorkoutDataComplete)
 from app.domain.enums import TrainingCategory, TrainingType
@@ -94,7 +95,7 @@ async def process_add_workout_command(
     else:
         await message.answer(
             text=FSM_ADD_TRAIN["fsm_pick_journal"],
-            reply_markup=get_pick_j_kb(
+            reply_markup=build_pick_journal_kb(
                 has_last=bool(user.last_journal),
                 has_choice=(len(journals) > 0),
             ),
@@ -118,7 +119,7 @@ async def process_pick_journal(
             journals: Iterable[DBJournal] = await journal_service.get_journals(tg_id)
             await message.edit_text(
                 text=GET_JOURNAL['select_journal'],
-                reply_markup=get_journals_kb(journals)
+                reply_markup=build_journals_kb(journals)
             )
 
     else:
@@ -222,7 +223,7 @@ async def process_add_train_cat(cback: CallbackQuery, state: FSMContext) -> None
         raise
 
     await state.update_data(training_category=training_cat)
-    await message.edit_reply_markup(reply_markup=train_type_kboard[training_cat])
+    await message.edit_reply_markup(reply_markup=train_type_kb[training_cat])
 
 # ———————————————————————————— 4.type ———————————————————————————————
 @workout_router.callback_query(
@@ -285,7 +286,7 @@ async def process_add_train_comment(message: Message, state: FSMContext) -> None
     workout = MessageParser.prettify_FSM_workout_data(data)
     await message.answer(
         text=FSM_ADD_TRAIN["fsm_to_check"].format(workout),
-        reply_markup=check_kboard)
+        reply_markup=add_workout_confirm_kb)
 
 # ———————————————————————————— 7.check ———————————————————————————————
 @workout_router.callback_query(
