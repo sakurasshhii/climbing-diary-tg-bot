@@ -9,7 +9,7 @@ from app.services.parser import JournalParser
 class TestParser:
     @pytest.mark.parametrize(
         "route",
-        "6a, 6a+, 6a:1, 6a:5, 6a:, 6a f, 6a rp, 6a+ f, 6a+ rp, 6a:10".split(", ")
+        "6a, 6a+, 6a:1, 6a:5, 6a:, 6a f, 6a rp, 6a+ f, 6a+ rp, 6a:10, 6а, 6б, 6с".split(", ")
     )
     def test_get_route_ok(self, route):
         assert JournalParser.get_route(route)

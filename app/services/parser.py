@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 class JournalParser:
     """Workout parser to get info from user message."""
 
-    PATTERN_ROUTE = re.compile(r"(?P<grade>[4-9][abcабс]\+?)(?P<falls>:(?P<falls_no>\d+)?)?(?P<flash>\sf)?(?P<rp>\srp)?")
+    PATTERN_ROUTE = re.compile(r"(?P<grade>[4-9][abc]\+?)(?P<falls>:(?P<falls_no>\d+)?)?(?P<flash>\sf)?(?P<rp>\srp)?")
+    CHAR_CORRESPONDENCE = {"а": "a", "б": "b", "с": "c",}
 
     @classmethod
     def parse_rows(cls, text: str, training_category: TrainingCategory) -> Sequence[Row]:
@@ -54,6 +55,9 @@ class JournalParser:
         6a: - 6а со срывом (количество не указано)
         6a:5 - 6а с пятью срывами
         """
+
+        for old, new in cls.CHAR_CORRESPONDENCE.items():
+            raw_route = raw_route.replace(old, new)
 
         match = cls.PATTERN_ROUTE.fullmatch(raw_route)
         if not match or match["grade"] is None:
@@ -112,7 +116,12 @@ class JournalParser:
                 comments = "-".join(data[1:])
 
             if data and data[0]:
-                for r in map(str.strip, data[0].split(",")):
+                raw_routes = data[0]
+
+                for old, new in cls.CHAR_CORRESPONDENCE.items():
+                    raw_routes = raw_routes.replace(old, new)
+
+                for r in map(str.strip, raw_routes.split(",")):
                     try:
                         routes.append(cls.get_route(r))
                     except ValueError:
