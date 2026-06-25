@@ -8,7 +8,7 @@ from app.domain.models import DBJournal
 from app.lexic.ru_kboards import (PICK_JOURNAL, TRAIN_CATEGORY,
                                   TRAIN_TYPE_CLIMB, TRAIN_TYPE_GYM,
                                   WORKOUT_DATE, WORKOUT_WRITE, EDIT_JOURNALS_MENU,
-                                  DEL_JOURNAL_READY)
+                                  DEL_JOURNAL_READY, DEL_JOURNAL_CONFIRM)
 
 
 def get_kb_from_dict(data: dict[str, str], one_col=False) -> InlineKeyboardMarkup:
@@ -97,3 +97,5 @@ def build_del_journal_kb(journals: Sequence[DBJournal], col=1) -> InlineKeyboard
     kb.row(InlineKeyboardButton(text=DEL_JOURNAL_READY["ok"], callback_data="ok"))
 
     return kb.as_markup()
+
+confirm_del_kb = get_kb_from_dict(DEL_JOURNAL_CONFIRM)
