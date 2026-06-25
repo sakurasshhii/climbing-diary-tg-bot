@@ -7,38 +7,39 @@ from app.domain.enums import TrainingCategory
 from app.domain.models import DBJournal
 from app.lexic.ru_kboards import (PICK_JOURNAL, TRAIN_CATEGORY,
                                   TRAIN_TYPE_CLIMB, TRAIN_TYPE_GYM,
-                                  WORKOUT_DATE, WORKOUT_WRITE)
+                                  WORKOUT_DATE, WORKOUT_WRITE, EDIT_JOURNALS_MENU,)
 
 
-def build_buttons_from_dict(data: dict[str, str]) -> list[InlineKeyboardButton]:
-    return [
-        InlineKeyboardButton(text=text, callback_data=cback)
-        for cback, text in data.items()
-    ]
+def get_kb_from_dict(data: dict[str, str], one_col=False) -> InlineKeyboardMarkup:
+    if one_col:
+        buttons = [
+            [InlineKeyboardButton(text=text, callback_data=cback)]
+            for cback, text in data.items()
+        ]
+    else:
+        buttons = [
+            [
+                InlineKeyboardButton(text=text, callback_data=cback)
+                for cback, text in data.items()
+            ]
+        ]
 
-def get_one_row_kb_from_dict(data: dict[str, str]) -> InlineKeyboardMarkup:
-    buttons = build_buttons_from_dict(data)
-
-    return InlineKeyboardMarkup(inline_keyboard=[buttons])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 # ———————————————————————————— FSM date ——————————————————————————————————
-date_kb = get_one_row_kb_from_dict(WORKOUT_DATE)
+select_date_kb = get_kb_from_dict(WORKOUT_DATE, one_col=True)
 
-# ———————————————————————————— FSM train type ——————————————————————————————————
-train_cat_kb = get_one_row_kb_from_dict(TRAIN_CATEGORY)
+# ———————————————————————————— FSM train type ————————————————————————————
+train_cat_kb = get_kb_from_dict(TRAIN_CATEGORY)
 train_type_kb: dict[TrainingCategory, InlineKeyboardMarkup] = {
-    TrainingCategory.CLIMBING: InlineKeyboardMarkup(
-        inline_keyboard=[build_buttons_from_dict(TRAIN_TYPE_CLIMB)],
-    ),
-    TrainingCategory.GYM: InlineKeyboardMarkup(
-        inline_keyboard=[build_buttons_from_dict(TRAIN_TYPE_GYM)],
-    ),
+    TrainingCategory.CLIMBING: get_kb_from_dict(TRAIN_TYPE_CLIMB),
+    TrainingCategory.GYM: get_kb_from_dict(TRAIN_TYPE_GYM),
 }
 
-# ———————————————————————————— FSM check ——————————————————————————————————
-add_workout_confirm_kb = get_one_row_kb_from_dict(WORKOUT_WRITE)
+# ———————————————————————————— FSM check —————————————————————————————————
+add_workout_confirm_kb = get_kb_from_dict(WORKOUT_WRITE)
 
-# ———————————————————————————— select_journal ——————————————————————————————————
+# ———————————————————————————— select_journal ————————————————————————————
 def build_journals_kb(journals: Sequence[DBJournal]) -> InlineKeyboardMarkup:
     """Build keyboard with user's journals."""
     journals_kb_builder = InlineKeyboardBuilder()
@@ -86,3 +87,6 @@ def build_pick_journal_kb(has_last: bool = True, has_choice: bool = True) -> Inl
     journ_kb_builder.adjust(1)
 
     return journ_kb_builder.as_markup()
+
+# ———————————————————————————— edit journals menu ——————————————————————————
+edit_journals_kb = get_kb_from_dict(EDIT_JOURNALS_MENU, one_col=True)

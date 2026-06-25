@@ -4,7 +4,7 @@ WORKOUT_DATE: dict[str, str] = {
     'other_date': 'Другой день...'
 }
 TRAIN_CATEGORY: dict[str, str] = {
-    'climbing': 'Тренировка по скалолазанию',
+    'climbing': 'Скалолазание',
     'gym': 'ОФП или СФП'
 }
 WORKOUT_WRITE: dict[str, str] = {
@@ -23,4 +23,9 @@ PICK_JOURNAL: dict[str, str] = {
     "last_journal": "Последний журнал",
     "new_journal": "Новый журнал",
     "select_journal": "Выбрать из списка"
+}
+EDIT_JOURNALS_MENU: dict[str, str] = {
+    "edit_journal": "✏️ Изменить",
+    "add_journal": "📝 Создать",
+    "delete_journal": "🗑️ Удалить",
 }

@@ -117,3 +117,7 @@ ADD_JOURNAL: dict[str, str] = {
     "input_comments": "Укажите комментарии или впишите прочерк...",
     "completed": "Журнал добавлен: {}."
 }
+
+EDIT_JOURNAL: dict[str, str] = {
+    "main_menu": "Меню редактирования журналов 📚",
+}
