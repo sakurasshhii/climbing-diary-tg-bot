@@ -3,12 +3,12 @@ from aiogram.types import CallbackQuery, InaccessibleMessage, Message
 from app.bot.handlers import exceptions as exc
 
 
-def assure_message_from_user_id(message: Message) -> Message:
+def assure_message_from_user_id(message: Message) -> tuple[Message, int]:
     """Check if message has user info."""
     if not message.from_user or not message.from_user.id:
         raise exc.NoInfoFromUserError(__name__)
     
-    return message
+    return message, message.from_user.id
 
 def assure_callback_message(cback: CallbackQuery) -> Message:
     """Check if cback has user info and message; returns cback.message."""

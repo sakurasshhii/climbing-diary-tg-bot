@@ -49,7 +49,7 @@ async def process_j_name(
     message: Message,
     state: FSMContext,
 ) -> None:
-    message = assure_message_from_user_id(message)
+    message, _ = assure_message_from_user_id(message)
     name = message.text if message.text else ""
 
     if len(name) > 15:
@@ -71,12 +71,10 @@ async def process_j_comments(
     journal_service: JournalService,
     user_service: UserService,
 ) -> None:
-    message = assure_message_from_user_id(message)
+    message, tg_id = assure_message_from_user_id(message)
 
     comments = message.text if message.text else ""
     await state.update_data(journal_comments=comments)
-
-    tg_id = message.from_user.id # type: ignore
 
     data: FSMNewJournalComplete = cast(
         "FSMNewJournalComplete",

@@ -67,9 +67,8 @@ async def process_add_workout_command(
     Для новых пользователей журнал создается автоматически.
     """
 
-    message = assure_message_from_user_id(message)
+    message, tg_id = assure_message_from_user_id(message)
 
-    tg_id = message.from_user.id  # type: ignore[union-attr]
     user = await user_service.get_user_assured(tg_id)
     await state.set_state(FSMFillWorkout.select_journal)
     journals = await journal_service.get_journals(tg_id)
@@ -193,7 +192,7 @@ async def process_add_date_other(
     state: FSMContext,
     date: dt.date
 ) -> None:
-    message = assure_message_from_user_id(message)
+    message, _ = assure_message_from_user_id(message)
     await state_add_date_set_next(state=state, date=date, message=message)
 
 @workout_router.message(
@@ -202,7 +201,7 @@ async def process_add_date_other(
 async def process_add_date_other_error(
         message: Message) -> None:
 
-    message = assure_message_from_user_id(message)
+    message, _ = assure_message_from_user_id(message)
     await message.answer(FSM_ADD_TRAIN["error_invalid_date"])
 
 # ———————————————————————————— 3.category ———————————————————————————————
@@ -251,7 +250,7 @@ async def process_add_train_type(cback: CallbackQuery, state: FSMContext) -> Non
 @workout_router.message(StateFilter(FSMFillWorkout.add_train_content), F.text)
 async def process_add_train_content(message: Message, state: FSMContext) -> None:
     """Step 4. Add training content."""
-    message = assure_message_from_user_id(message)
+    message, _ = assure_message_from_user_id(message)
 
     data: FSMWorkoutData = cast("FSMWorkoutData", await state.get_data())
     training_cat: TrainingCategory = data.get("training_category", None)

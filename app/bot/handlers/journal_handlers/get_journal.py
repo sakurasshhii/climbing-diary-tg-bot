@@ -33,16 +33,15 @@ journal_get_router = Router()
 # ———————————————————————————— FSM ———————————————————————————————————————
 # ———————————————————————————— 1.select ——————————————————————————————————
 
-@journal_get_router.message(Command('my_journal'), StateFilter(default_state))
+@journal_get_router.message(Command("my_journal"), StateFilter(default_state))
 async def process_my_journal(
     message: Message,
     state: FSMContext,
     journal_service: JournalService
 ) -> None:
     """Select from user's journals."""
-    message = assure_message_from_user_id(message)
+    message, tg_id = assure_message_from_user_id(message)
 
-    tg_id = message.from_user.id # type: ignore
     journals: Iterable[DBJournal] = await journal_service.get_journals(tg_id)
 
     await state.set_state(FSMGetJournal.select_journal)
