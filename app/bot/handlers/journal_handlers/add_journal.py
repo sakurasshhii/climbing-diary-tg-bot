@@ -14,11 +14,12 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from app.bot.handlers.journal_handlers.helpers import state_pick_j_set_next
+from app.bot.handlers.journal_handlers.helpers import (
+    state_pick_j_set_next, state_add_journal_start)
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
 from app.bot.states.add_workout import FSMFillWorkout
-from app.bot.states.edit_journal import FSMNewJournal, FSMNewJournalComplete
+from app.bot.states.edit_journal import FSMAddJournal, FSMJournalComplete
 from app.lexic.ru import ADD_JOURNAL
 from app.services.services import JournalService, UserService
 
@@ -38,11 +39,10 @@ async def process_j_input_name(
     await cback.answer()
     message = assure_callback_message(cback)
 
-    await state.set_state(FSMNewJournal.input_name)
-    await message.answer(text=ADD_JOURNAL["input_name"])
+    await state_add_journal_start(message, state)
 
 @journal_add_router.message(
-    StateFilter(FSMNewJournal.input_name),
+    StateFilter(FSMAddJournal.input_name),
     F.text,
 )
 async def process_j_name(
@@ -58,11 +58,11 @@ async def process_j_name(
         await message.answer(text=ADD_JOURNAL["name_too_short"])
     else:
         await state.update_data(journal_name=name)
-        await state.set_state(FSMNewJournal.input_comment)
+        await state.set_state(FSMAddJournal.input_comments)
         await message.answer(text=ADD_JOURNAL["input_comments"].format(name))
 
 @journal_add_router.message(
-    StateFilter(FSMNewJournal.input_comment),
+    StateFilter(FSMAddJournal.input_comments),
     F.text,
 )
 async def process_j_comments(
@@ -76,8 +76,8 @@ async def process_j_comments(
     comments = message.text if message.text else ""
     await state.update_data(journal_comments=comments)
 
-    data: FSMNewJournalComplete = cast(
-        "FSMNewJournalComplete",
+    data: FSMJournalComplete = cast(
+        "FSMJournalComplete",
         await state.get_data(),
     )
 
@@ -91,5 +91,6 @@ async def process_j_comments(
         state=state,
         message=message,
         journal_service=journal_service,
-        user_service=user_service,
     )
+    ### TODO Сейчас универсальная функция добавления журнала
+    # перенаправляет пользователя на добавление тренировки (дата)

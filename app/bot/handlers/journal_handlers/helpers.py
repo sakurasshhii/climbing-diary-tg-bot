@@ -6,13 +6,14 @@ from aiogram.types import Message
 
 from app.bot.keyboards.journal_keyboards import select_date_kb, train_cat_kb
 from app.bot.states.add_workout import FSMFillWorkout
-from app.lexic.ru import FSM_ADD_TRAIN
+from app.bot.states.edit_journal import FSMAddJournal
+from app.lexic.ru import FSM_ADD_TRAIN, ADD_JOURNAL
 from app.services.services import JournalService, UserService
 
 logger = logging.getLogger(__name__)
 
 
-# ———————————————————————————— helper ——————————————————————————————————
+# add_workout — date
 async def state_add_date_set_next(
     date: dt.date,
     state: FSMContext,
@@ -25,12 +26,12 @@ async def state_add_date_set_next(
         reply_markup=train_cat_kb,
     )
 
+# add_workout — journal choice & move on date
 async def state_pick_j_set_next(
     journal_id: int,
     state: FSMContext,
     message: Message,
     journal_service: JournalService,
-    user_service: UserService,
 ) -> None:
 
     await state.update_data(journal_no=journal_id)
@@ -43,3 +44,11 @@ async def state_pick_j_set_next(
         text=text,
         reply_markup=select_date_kb,
     )
+
+# edit journals & add_journal — start FSM (AddJournal)
+async def state_add_journal_start(
+    message: Message,
+    state: FSMContext,
+) -> None:
+    await state.set_state(FSMAddJournal.input_name)
+    await message.answer(text=ADD_JOURNAL["input_name"])
