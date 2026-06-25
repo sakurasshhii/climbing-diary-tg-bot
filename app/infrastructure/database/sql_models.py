@@ -172,6 +172,11 @@ FROM journals
 WHERE user_id = ?;
 """
 
+GET_JOURNALS_IDS = """
+SELECT *
+FROM journals
+WHERE id IN ({});"""
+
 GET_WORKOUTS = """
 SELECT *
 FROM workouts

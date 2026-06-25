@@ -107,6 +107,12 @@ class JournalService:
         logger.info("JOURNALS: %s", tuple(journals))
         return journals
 
+    async def get_journals_by_ids(self, ids: Sequence[int]) -> Sequence[DBJournal]:
+        """Возвращвет список указанных journals."""
+        journals = await self.journal_repo.get_journals_by_ids(ids)
+
+        return journals
+
     async def get_journal(self, journal_id: int) -> DBJournal:
         journal = await self.journal_repo.get_journal(journal_id)
         if journal is None:

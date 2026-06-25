@@ -25,9 +25,9 @@ from aiogram.types import Message, CallbackQuery
 from app.bot.handlers.journal_handlers.validators import \
     assure_message_from_user_id, assure_callback_message
 from app.bot.handlers.journal_handlers.helpers import state_add_journal_start
-from app.bot.keyboards.journal_keyboards import edit_journals_kb
-from app.bot.states.edit_journal import (FSMDeleteJournal, FSMEditJournal,
-                                         FSMAddJournal, FSMUserMenu)
+from app.bot.filters.handler_filters import IsDigit
+from app.bot.keyboards.journal_keyboards import edit_journals_kb, build_del_journal_kb
+from app.bot.states.edit_journal import FSMDeleteJournal, FSMEditJournal, FSMUserMenu
 from app.lexic.ru import EDIT_JOURNAL
 from app.services.services import JournalService
 
@@ -88,12 +88,62 @@ async def process_add_journal(
 async def process_delete_journal(
     cback: CallbackQuery,
     state: FSMContext,
+    journal_service: JournalService,
 ) -> None:
     await cback.answer()
     message = assure_callback_message(cback)
+    journals = await journal_service.get_journals(cback.from_user.id)
+
+    if len(journals) > 5:
+        n_col = 2
 
     await message.answer(
-        text="Button pressed: delete_journal"
+        text=EDIT_JOURNAL["del_select"],
+        reply_markup=build_del_journal_kb(journals, n_col)
     )
 
     await state.set_state(FSMDeleteJournal.select_journal)
+
+@journal_edit_router.callback_query(
+    StateFilter(FSMDeleteJournal.select_journal),
+    IsDigit()
+)
+async def process_select_to_del(
+    cback: CallbackQuery,
+    state: FSMContext,
+) -> None:
+    await cback.answer()
+    state_data = await state.get_data()
+
+    del_list = state_data.get("del_list", [])
+    del_list.append(cback.data)
+    await state.update_data(del_list=del_list)
+
+@journal_edit_router.callback_query(
+    StateFilter(FSMDeleteJournal.select_journal),
+    F.data.in_(["ok"])
+)
+async def process_delete_confirm(
+    cback: CallbackQuery,
+    state: FSMContext,
+    journal_service: JournalService,
+) -> None:
+    await cback.answer()
+    message = assure_callback_message(cback)
+    state_data = await state.get_data()
+
+    del_list = state_data.get("del_list", [])
+    if not del_list:
+        message.answer(text="NO SELECTED JOURNALS")
+
+    journals = await journal_service.get_journals_by_ids(del_list)
+    journals = "\n".join(j.preview for j in journals)
+
+    logger.info("STATE data: %s", state_data)
+    logger.info("SELECTED journals: %s", journals)
+
+    await message.answer(
+        text=EDIT_JOURNAL["del_confirm"].format(journals)
+    )
+
+    await state.set_state(FSMDeleteJournal.confirm_del)

@@ -118,7 +118,7 @@ async def process_pick_journal(
     tg_id = cback.from_user.id # type: ignore
 
     if cback.data == "select_journal":
-            journals: Iterable[DBJournal] = await journal_service.get_journals(tg_id)
+            journals = await journal_service.get_journals(tg_id)
             await message.edit_text(
                 text=GET_JOURNAL['select_journal'],
                 reply_markup=build_journals_kb(journals)

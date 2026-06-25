@@ -167,6 +167,16 @@ class JournalRepository:
         )
         return tuple(DBJournal(**j) for j in journals)
 
+    async def get_journals_by_ids(self, ids: Sequence[int]) -> Sequence[DBJournal]:
+        """Возвращает список указанных journals."""
+        delimiter = ("?, " * len(ids))[:-2]
+
+        journals = await self.db.fetchall(
+            GET_JOURNALS_IDS.format(delimiter),
+            tuple(ids),
+        )
+        return tuple(DBJournal(**j) for j in journals)
+
     async def get_complete_journal(self, journal_id: int) -> Journal | None:
         """Собирает и возвращает Journal с полной информацией о тренировках."""
         async with Transaction(self.db) as db:

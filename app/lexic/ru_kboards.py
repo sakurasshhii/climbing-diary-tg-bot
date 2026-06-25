@@ -29,3 +29,6 @@ EDIT_JOURNALS_MENU: dict[str, str] = {
     "add_journal": "📝 Создать",
     "delete_journal": "🗑️ Удалить",
 }
+DEL_JOURNAL_READY: dict[str, str] = {
+    "ok": "Готово❕"
+}

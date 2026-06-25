@@ -120,4 +120,6 @@ ADD_JOURNAL: dict[str, str] = {
 
 EDIT_JOURNAL: dict[str, str] = {
     "main_menu": "Меню редактирования журналов 📚",
+    "del_select": "Выберите журнал_ы для удаления:",
+    "del_confirm": "Подтвердить удаление журналов:\n\n{}",
 }
