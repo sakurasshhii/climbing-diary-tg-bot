@@ -22,6 +22,7 @@ from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
 from app.bot.keyboards.journal_keyboards import get_journals_kb
 from app.bot.states.edit_journal import FSMGetJournal
+from app.bot.filters.handler_filters import Isalnum
 from app.domain.models import DBJournal, Journal
 from app.lexic.ru import GET_JOURNAL
 from app.services.services import JournalService
@@ -54,7 +55,10 @@ async def process_my_journal(
     )
 
 # ———————————————————————————— 2.send ——————————————————————————————————
-@journal_get_router.callback_query(StateFilter(FSMGetJournal.select_journal))
+@journal_get_router.callback_query(
+    StateFilter(FSMGetJournal.select_journal),
+    Isalnum(),
+)
 async def process_show_journal(
     cback: CallbackQuery,
     state: FSMContext,

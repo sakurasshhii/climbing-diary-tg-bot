@@ -42,7 +42,7 @@ from app.bot.keyboards.journal_keyboards import (check_kboard, get_journals_kb,
                                                  train_type_kboard)
 from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
                                         FSMWorkoutDataComplete)
-from app.bot.filters.dates_filter import IsCorrectDate
+from app.bot.filters.handler_filters import IsCorrectDate
 from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.models import DBJournal
 from app.lexic.ru import FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT, GET_JOURNAL
@@ -186,7 +186,8 @@ async def process_add_date_press_other(cback: CallbackQuery) -> None:
 
 @workout_router.message(
     StateFilter(FSMFillWorkout.add_date),
-    IsCorrectDate()) # to do!!! add date filter
+    IsCorrectDate()
+)
 async def process_add_date_other(
     message: Message,
     state: FSMContext,

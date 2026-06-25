@@ -1,8 +1,9 @@
 import datetime as dt
 import re
+from typing import Any
 
 from aiogram.filters import BaseFilter
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 
 
 class IsCorrectDate(BaseFilter):
@@ -20,3 +21,9 @@ class IsCorrectDate(BaseFilter):
                 return False
 
         return False
+
+
+class Isalnum(BaseFilter):
+    async def __call__(self, cback: CallbackQuery) -> bool:
+        no: str = cback.data or ""
+        return no.isalnum()

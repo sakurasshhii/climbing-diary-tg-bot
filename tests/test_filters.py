@@ -1,7 +1,7 @@
 import pytest
 import datetime as dt
 
-from app.bot.filters.dates_filter import IsCorrectDate
+from app.bot.filters.handler_filters import IsCorrectDate
 
 
 class TestFilterIsCorrectDate:
