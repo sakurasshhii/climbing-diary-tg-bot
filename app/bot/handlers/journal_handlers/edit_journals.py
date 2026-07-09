@@ -20,7 +20,7 @@ from aiogram import Router, F
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
-from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
+from aiogram.types import Message, CallbackQuery
 
 from app.bot.handlers.journal_handlers.validators import \
     assure_message_from_user_id, assure_callback_message
@@ -128,9 +128,6 @@ async def process_select_to_del(
     await message.edit_reply_markup(
         reply_markup=new_kb,
     )
-
-    # TODO переделать в хэлпер, чтобы можно было вызывать повторно
-    # (когда нажали ок но не выбрали ничего из списка)
 
 @journal_edit_router.callback_query(
     StateFilter(FSMDeleteJournal.select_journal),

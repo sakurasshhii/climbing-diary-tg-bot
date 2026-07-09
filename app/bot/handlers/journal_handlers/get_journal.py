@@ -77,7 +77,7 @@ async def process_show_journal(
     await message.answer_document(
         document=BufferedInputFile(
             file=str(journal).encode("utf-8"),
-            filename="my_journal.txt"
+            filename=journal.name
         )
     )
 
