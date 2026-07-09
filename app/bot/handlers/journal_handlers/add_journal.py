@@ -14,8 +14,8 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from app.bot.handlers.journal_handlers.helpers import (
-    state_pick_j_set_next, state_add_journal_start)
+from app.bot.handlers.journal_handlers.helpers import (state_add_journal_start,
+                                                       state_pick_j_set_next)
 from app.bot.handlers.journal_handlers.validators import (
     assure_callback_message, assure_message_from_user_id)
 from app.bot.states.add_workout import FSMFillWorkout

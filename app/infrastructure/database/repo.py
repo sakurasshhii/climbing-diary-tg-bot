@@ -6,10 +6,10 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 
+from app.domain.exceptions import UserNotFoundError
 from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
                                DBWorkout, Exercise, GymTrain, Journal, Route,
                                Row, Train, User, Workout)
-from app.domain.exceptions import UserNotFoundError
 
 from .database import Database, Transaction
 from .sql_models import *

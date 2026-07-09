@@ -22,7 +22,6 @@
 
 import datetime as dt
 import logging
-from collections.abc import Iterable
 from typing import cast
 
 from aiogram import F, Router

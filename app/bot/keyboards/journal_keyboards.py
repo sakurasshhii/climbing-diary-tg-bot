@@ -1,16 +1,15 @@
 import logging
-from collections.abc import Sequence, Collection
+from collections.abc import Collection, Sequence
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.domain.enums import TrainingCategory
 from app.domain.models import DBJournal
-from app.lexic.ru_kboards import (PICK_JOURNAL, TRAIN_CATEGORY,
-                                  TRAIN_TYPE_CLIMB, TRAIN_TYPE_GYM,
-                                  WORKOUT_DATE, WORKOUT_WRITE, EDIT_JOURNALS_MENU,
-                                  DEL_JOURNAL_READY, DEL_JOURNAL_CONFIRM)
-
+from app.lexic.ru_kboards import (DEL_JOURNAL_CONFIRM, DEL_JOURNAL_READY,
+                                  EDIT_JOURNALS_MENU, PICK_JOURNAL,
+                                  TRAIN_CATEGORY, TRAIN_TYPE_CLIMB,
+                                  TRAIN_TYPE_GYM, WORKOUT_DATE, WORKOUT_WRITE)
 
 logger = logging.getLogger(__name__)
 
@@ -102,12 +101,12 @@ edit_journals_kb = get_kb_from_dict(EDIT_JOURNALS_MENU, one_col=True)
 
 def build_del_journal_kb(
     journals: Sequence[DBJournal],
-    col_optimization: bool = False,
+    col_resize: bool = False,
     del_list: Collection[int] = [],
 ) -> InlineKeyboardMarkup:
     """Build kb to chose journals to delete."""
 
-    if col_optimization and len(journals) > 5:
+    if col_resize and len(journals) > 5:
         n_col = 2
     else:
         (n_col) = 1

@@ -7,7 +7,7 @@ from aiogram.types import Message
 from app.bot.keyboards.journal_keyboards import select_date_kb, train_cat_kb
 from app.bot.states.add_workout import FSMFillWorkout
 from app.bot.states.edit_journal import FSMAddJournal
-from app.lexic.ru import FSM_ADD_TRAIN, ADD_JOURNAL
+from app.lexic.ru import ADD_JOURNAL, FSM_ADD_TRAIN
 from app.services.services import JournalService, UserService
 
 logger = logging.getLogger(__name__)

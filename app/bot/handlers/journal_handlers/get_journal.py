@@ -22,7 +22,7 @@ from app.bot.handlers.journal_handlers.validators import (
     assure_callback_data, assure_callback_message, assure_message_from_user_id)
 from app.bot.keyboards.journal_keyboards import build_journals_kb
 from app.bot.states.edit_journal import FSMGetJournal
-from app.domain.models import DBJournal, Journal
+from app.domain.models import DBJournal
 from app.lexic.ru import GET_JOURNAL
 from app.services.services import JournalService
 
