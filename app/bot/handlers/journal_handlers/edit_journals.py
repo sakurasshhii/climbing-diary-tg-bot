@@ -131,7 +131,6 @@ async def process_select_to_del(
 
     # TODO переделать в хэлпер, чтобы можно было вызывать повторно
     # (когда нажали ок но не выбрали ничего из списка)
-    # добавить выделение при выборе журнала!!!
 
 @journal_edit_router.callback_query(
     StateFilter(FSMDeleteJournal.select_journal),
@@ -142,17 +141,16 @@ async def process_delete_confirm(
     state: FSMContext,
     journal_service: JournalService,
 ) -> None:
-    await cback.answer()
     message = assure_callback_message(cback)
     state_data = await state.get_data()
-
     del_list = state_data.get("del_list", [])
     if not del_list:
-        message.edit_text(
+        await cback.answer(
             text="NO SELECTED JOURNALS",
-            reply_markup=None,
         )
         return
+
+    await cback.answer()
 
     journals = await journal_service.get_journals_by_ids(del_list)
     journals = "\n".join(j.preview for j in journals)
@@ -163,7 +161,7 @@ async def process_delete_confirm(
     await message.edit_text(
         text=EDIT_JOURNAL["del_confirm"].format(journals),
         reply_markup=confirm_del_kb
-    )
+    )   
 
     await state.set_state(FSMDeleteJournal.confirm_del)
 
@@ -185,5 +183,7 @@ async def process_delete_finish(
     else:
         await journal_service.delete_journals(cback.from_user.id, del_list)
         await message.edit_text(text="УДАЛЕНИЕ ЗАВЕРШЕНО")
+
+    await state.clear()
 
     # ВЕРНУТЬСЯ В МЕНЮ

@@ -30,7 +30,7 @@ EDIT_JOURNALS_MENU: dict[str, str] = {
     "delete_journal": "🗑️ Удалить",
 }
 DEL_JOURNAL_READY: dict[str, str] = {
-    "ok": "Готово❕"
+    "ok": "✔️Готово"
 }
 DEL_JOURNAL_CONFIRM: dict[str, str] = {
     "ok": "⭕️Удалить",
