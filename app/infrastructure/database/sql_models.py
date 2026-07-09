@@ -2,7 +2,7 @@
 Набор SQL-команд для общения с БД
 '''
 
-################## table creation ###################
+#—————————————————————— table creation ———————————————————
 
 SCRIPT_CREATE_TABLES = """
 CREATE TABLE IF NOT EXISTS users (
@@ -113,8 +113,8 @@ CREATE INDEX IF NOT EXISTS idx_exercise_row
 ON exercises(row_id);
 """
 
-################ user repo operations ################
-################ insert data #########################
+#—————————————————————— user repo operations —————————————
+#—————————————————————— insert data ——————————————————————
 
 INSERT_USER = """
 INSERT OR IGNORE INTO users (tg_id, username)
@@ -150,7 +150,7 @@ INSERT_EXERCISE = """
 INSERT INTO exercises (row_id, exercise_order, name, repeats)
 VALUES (?, ?, ?, ?);
 """
-################ get data ###########################
+#—————————————————————————— get data ——————————————————————————
 
 GET_USER_BY_TG_ID = """
 SELECT *
@@ -288,8 +288,7 @@ ORDER BY
     ex.row_id,
     ex.exercise_order;
 """
-
-############################## update data #################################
+#—————————————————————————— update data ——————————————————————————
 
 UPDATE_JOURNAL_PERIOD = """
 UPDATE journals
@@ -297,4 +296,23 @@ SET
     period_start = ?,
     period_end = ?
 WHERE id = ?;
+"""
+
+UPDATE_LAST_JOURNAL = """
+UPDATE users
+SET last_journal = (
+    SELECT id
+    FROM journals
+    WHERE user_id = ?
+    ORDER BY id DESC
+    LIMIT 1
+)
+WHERE id = ?;
+"""
+#—————————————————————————— delete data ——————————————————————————
+
+DELETE_JOURNALS = """
+DELETE FROM journals
+WHERE user_id = ?
+AND id IN ({});
 """

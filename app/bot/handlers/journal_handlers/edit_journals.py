@@ -20,7 +20,7 @@ from aiogram import Router, F
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 
 from app.bot.handlers.journal_handlers.validators import \
     assure_message_from_user_id, assure_callback_message
@@ -148,7 +148,10 @@ async def process_delete_confirm(
 
     del_list = state_data.get("del_list", [])
     if not del_list:
-        message.answer(text="NO SELECTED JOURNALS")
+        message.edit_text(
+            text="NO SELECTED JOURNALS",
+            reply_markup=None,
+        )
         return
 
     journals = await journal_service.get_journals_by_ids(del_list)
@@ -157,7 +160,7 @@ async def process_delete_confirm(
     logger.info("STATE data: %s", state_data)
     logger.info("SELECTED journals: %s", journals)
 
-    await message.answer(
+    await message.edit_text(
         text=EDIT_JOURNAL["del_confirm"].format(journals),
         reply_markup=confirm_del_kb
     )
@@ -178,9 +181,9 @@ async def process_delete_finish(
     del_list = state_data.get("del_list", [])
 
     if cback.data == "cancel":
-        await message.answer(text="УДАЛЕНИЕ ОТМЕНЕНО")
+        await message.edit_text(text="УДАЛЕНИЕ ОТМЕНЕНО")
     else:
-        await journal_service.delete_journals(del_list)
-        await message.answer(text="УДАЛЕНИЕ ЗАВЕРШЕНО")
+        await journal_service.delete_journals(cback.from_user.id, del_list)
+        await message.edit_text(text="УДАЛЕНИЕ ЗАВЕРШЕНО")
 
     # ВЕРНУТЬСЯ В МЕНЮ

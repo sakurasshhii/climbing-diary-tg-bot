@@ -9,6 +9,7 @@ from collections.abc import Iterable, Sequence
 from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
                                DBWorkout, Exercise, GymTrain, Journal, Route,
                                Row, Train, User, Workout)
+from app.domain.exceptions import UserNotFoundError
 
 from .database import Database, Transaction
 from .sql_models import *
@@ -38,12 +39,15 @@ class UserRepository:
 
         return tuple(User(**u) for u in users)
 
-    async def get_user_by_tg(self, tg_id: int) -> User | None:
+    async def get_user_by_tg(self, tg_id: int, raise_err=False) -> User | None:
         """Get user from table users by his telegram id."""
         user = await self.db.fetchone(
             GET_USER_BY_TG_ID,
             (tg_id, ),
         )
+
+        if raise_err and not user:
+            raise UserNotFoundError(tg_id)
 
         return User(**user) if user else None
 
@@ -169,7 +173,7 @@ class JournalRepository:
 
     async def get_journals_by_ids(self, ids: Sequence[int]) -> Sequence[DBJournal]:
         """Возвращает список указанных journals."""
-        delimiter = ("?, " * len(ids))[:-2]
+        delimiter = self.get_delimiter(ids)
 
         journals = await self.db.fetchall(
             GET_JOURNALS_IDS.format(delimiter),
@@ -246,3 +250,20 @@ class JournalRepository:
             content=workouts,
             comments=db_journal.comments or ""
         )
+
+    async def delete_journals(self, user_id: int, del_list: Sequence[int]) -> None:
+        """Удаляет указанные journals из таблицы."""
+        delimiter = self.get_delimiter(del_list)
+        async with Transaction(self.db) as db:
+            await db.execute(
+                DELETE_JOURNALS.format(delimiter),
+                tuple([user_id] + list(del_list)),
+            )
+            await db.execute(
+                UPDATE_LAST_JOURNAL,
+                (user_id, user_id),
+            )
+
+    @staticmethod
+    def get_delimiter(data: Sequence[object]) -> str:
+        return ("?, " * len(data))[:-2]

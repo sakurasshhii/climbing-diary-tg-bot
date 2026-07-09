@@ -317,7 +317,7 @@ async def process_check_correct(
 
     ############## to do!
     # Исправить на добавление train: на случай, если это вторая тренировка за день
-    await journal_service.add_workout(tg_id, data)
+    await journal_service.add_workout(data)
     await message.answer(
         text=FSM_ADD_TRAIN["fsm_complete"],
         reply_markup=ReplyKeyboardRemove())
