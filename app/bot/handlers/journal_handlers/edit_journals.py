@@ -58,6 +58,8 @@ async def process_edit_journal(
     await cback.answer()
     message = assure_callback_message(cback)
 
+    logger.info("BUTTON PRESSED: edit_journal")
+
     await message.edit_text(
         text="Button pressed: edit_journal"
     )
@@ -75,16 +77,16 @@ async def process_add_journal(
     await cback.answer()
     message = assure_callback_message(cback)
 
-    # await message.answer(
-    #     text="Button pressed: select_journal"
-    # )
+    logger.info("BUTTON PRESSED: select_journal")
+
     await message.delete()
     await state_add_journal_start(message, state)
 
 # ———————————————————————————— delete_journal —————————————————————————
 @journal_edit_router.callback_query(
     StateFilter(FSMUserMenu.journal_menu),
-    F.data.in_(["delete_journal"]),)
+    F.data.in_(["delete_journal"]),
+)
 async def process_delete_journal(
     cback: CallbackQuery,
     state: FSMContext,
@@ -94,30 +96,39 @@ async def process_delete_journal(
     message = assure_callback_message(cback)
     journals = await journal_service.get_journals(cback.from_user.id)
 
-    if len(journals) > 5:
-        n_col = 2
+    logger.info("BUTTON PRESSED: delete_journal")
 
     await message.edit_text(
         text=EDIT_JOURNAL["del_select"],
-        reply_markup=build_del_journal_kb(journals, n_col)
+        reply_markup=build_del_journal_kb(journals, col_optimization=True)
     )
 
     await state.set_state(FSMDeleteJournal.select_journal)
 
 @journal_edit_router.callback_query(
     StateFilter(FSMDeleteJournal.select_journal),
-    IsDigit()
+    IsDigit(),
 )
 async def process_select_to_del(
     cback: CallbackQuery,
     state: FSMContext,
+    journal_service: JournalService,
 ) -> None:
     await cback.answer()
     state_data = await state.get_data()
+    message = assure_callback_message(cback)
 
     del_list = state_data.get("del_list", [])
     del_list.append(cback.data)
     await state.update_data(del_list=del_list)
+
+    journals = await journal_service.get_journals(cback.from_user.id)
+    new_kb = build_del_journal_kb(journals, col_optimization=True, del_list={int(x) for x in del_list})
+
+    await message.edit_reply_markup(
+        reply_markup=new_kb,
+    )
+
     # TODO переделать в хэлпер, чтобы можно было вызывать повторно
     # (когда нажали ок но не выбрали ничего из списка)
     # добавить выделение при выборе журнала!!!

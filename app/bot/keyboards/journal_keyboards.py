@@ -1,4 +1,5 @@
-from collections.abc import Sequence
+import logging
+from collections.abc import Sequence, Collection
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -9,6 +10,9 @@ from app.lexic.ru_kboards import (PICK_JOURNAL, TRAIN_CATEGORY,
                                   TRAIN_TYPE_CLIMB, TRAIN_TYPE_GYM,
                                   WORKOUT_DATE, WORKOUT_WRITE, EDIT_JOURNALS_MENU,
                                   DEL_JOURNAL_READY, DEL_JOURNAL_CONFIRM)
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_kb_from_dict(data: dict[str, str], one_col=False) -> InlineKeyboardMarkup:
@@ -43,17 +47,22 @@ add_workout_confirm_kb = get_kb_from_dict(WORKOUT_WRITE)
 # ———————————————————————————— select_journal ————————————————————————————
 def build_journals(
         journals: Sequence[DBJournal],
-        prefix: str = ""
+        prefix: str = "",
+        prefix_list: Collection[int] = [],
 ) -> InlineKeyboardBuilder:
     """Build keyboard with user's journals."""
+
     journals_kb_builder = InlineKeyboardBuilder()
     journals_kb_builder.row(
         *(
             InlineKeyboardButton(
-                text=prefix + journal.preview,
+                text=(
+                    f"{prefix}{journal.preview}"
+                    if journal.id in prefix_list
+                    else journal.preview
+                ),
                 callback_data=str(journal.id),
-            )
-            for journal in journals
+            ) for journal in journals
         )
     )
     journals_kb_builder.adjust(1)
@@ -91,9 +100,20 @@ def build_pick_journal_kb(has_last: bool = True, has_choice: bool = True) -> Inl
 # ———————————————————————————— edit journals menu ——————————————————————————
 edit_journals_kb = get_kb_from_dict(EDIT_JOURNALS_MENU, one_col=True)
 
-def build_del_journal_kb(journals: Sequence[DBJournal], col=1) -> InlineKeyboardMarkup:
-    kb = build_journals(journals, prefix="❌")
-    kb.adjust(col)
+def build_del_journal_kb(
+    journals: Sequence[DBJournal],
+    col_optimization: bool = False,
+    del_list: Collection[int] = [],
+) -> InlineKeyboardMarkup:
+    """Build kb to chose journals to delete."""
+
+    if col_optimization and len(journals) > 5:
+        n_col = 2
+    else:
+        (n_col) = 1
+
+    kb = build_journals(journals, prefix="❌", prefix_list=del_list)
+    kb.adjust(n_col)
     kb.row(InlineKeyboardButton(text=DEL_JOURNAL_READY["ok"], callback_data="ok"))
 
     return kb.as_markup()
