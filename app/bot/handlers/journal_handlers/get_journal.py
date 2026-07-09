@@ -68,6 +68,8 @@ async def process_show_journal(
     if journal is None:
         raise ValueError("PICKED JOURNAL NOT FOUND: %s", journal_id)
 
+    await message.delete()
+
     await message.answer(
         text=GET_JOURNAL["journal_in_doc"].format(journal.dates),
         reply_markup=ReplyKeyboardRemove()

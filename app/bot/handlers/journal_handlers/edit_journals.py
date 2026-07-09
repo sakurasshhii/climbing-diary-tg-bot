@@ -58,7 +58,7 @@ async def process_edit_journal(
     await cback.answer()
     message = assure_callback_message(cback)
 
-    await message.answer(
+    await message.edit_text(
         text="Button pressed: edit_journal"
     )
 
@@ -75,10 +75,10 @@ async def process_add_journal(
     await cback.answer()
     message = assure_callback_message(cback)
 
-    await message.answer(
-        text="Button pressed: select_journal"
-    )
-
+    # await message.answer(
+    #     text="Button pressed: select_journal"
+    # )
+    await message.delete()
     await state_add_journal_start(message, state)
 
 # ———————————————————————————— delete_journal —————————————————————————
@@ -97,7 +97,7 @@ async def process_delete_journal(
     if len(journals) > 5:
         n_col = 2
 
-    await message.answer(
+    await message.edit_text(
         text=EDIT_JOURNAL["del_select"],
         reply_markup=build_del_journal_kb(journals, n_col)
     )
