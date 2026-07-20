@@ -7,6 +7,8 @@ from app.domain.enums import TrainingCategory, TrainingType
 from app.domain.exceptions import UserNotFoundError
 from app.domain.models import DBJournal, Journal, User
 from app.services.services import JournalService
+from app.services.parser import JournalParser
+from app.bot.states.add_workout import FSMWorkoutDataComplete
 
 
 class TestUserService:
@@ -67,13 +69,6 @@ class TestJournalService:
         )
 
     @pytest.mark.asyncio
-    async def test_add_journal_user_missing(self, journal_service, user_repo):
-        user_repo.get_user_by_tg.return_value = None
-
-        with pytest.raises(UserNotFoundError):
-            await journal_service.add_journal(123)
-
-    @pytest.mark.asyncio
     @patch("app.services.services.JournalParser.parse_workout")
     async def test_add_workout_ok(
         self,
@@ -81,34 +76,28 @@ class TestJournalService:
         user_repo,
         journal_repo,
         journal_service,
+        row_routes,
     ):
         user_repo.get_user_by_tg.return_value = {"id": 1}
         fake_workout = object()
         parser_mock.return_value = fake_workout
 
-        data = {
+        data = FSMWorkoutDataComplete(**{
             "workout_date": dt.date.today(),
             "training_category": TrainingCategory.CLIMBING,
             "training_type": TrainingType.LEAD,
-            "content": "6a",
+            "content": JournalParser.dumps_rows([row_routes]),
             "comments": "",
             "journal_no": 5,
-        }
+        })
 
-        await journal_service.add_workout(123, data)
+        await journal_service.add_workout(data)
 
         parser_mock.assert_called_once()
         journal_repo.add_workout.assert_awaited_once_with(
             journal_id=5,
             workout=fake_workout,
         )
-
-    @pytest.mark.asyncio
-    async def test_add_workout_user_not_found(self, user_repo, journal_service):
-        user_repo.get_user_by_tg.return_value = None
-
-        with pytest.raises(UserNotFoundError):
-            await journal_service.add_workout(123, {})
 
     @pytest.mark.asyncio
     async def test_get_journals_ok(
@@ -126,13 +115,6 @@ class TestJournalService:
 
         assert result == expected
         journal_repo.get_journals.assert_awaited_once_with(default_user.id)
-
-    @pytest.mark.asyncio
-    async def test_get_journals_user_not_found(self, user_repo, journal_service):
-        user_repo.get_user_by_tg.return_value = None
-
-        with pytest.raises(UserNotFoundError):
-            await journal_service.get_journals(123)
 
     @pytest.mark.asyncio
     async def test_get_complete_journal_not_found(self, journal_repo, journal_service):
@@ -158,17 +140,3 @@ class TestJournalService:
         assert isinstance(result, Journal)
         assert len(result) == 2
         assert result.comments == "my comment"
-
-    def test_training_validation_true(self):
-        result = JournalService.training_sets(
-            "6a",
-            TrainingCategory.CLIMBING,
-        )
-        assert result is True
-
-    def test_training_validation_false(self):
-        result = JournalService.training_sets(
-            " ",
-            TrainingCategory.GYM,
-        )
-        assert result is False

@@ -90,12 +90,12 @@ class TestParser:
         rows = JournalParser.parse_rows(text=text, training_category=training_category)
         assert rows == []
 
-    def test_parse_workout_ok(self, new_date):
+    def test_parse_workout_ok(self, new_date, row_routes, row_exercises):
         w = JournalParser.parse_workout(
             workout_date=new_date,
             training_category=TrainingCategory.CLIMBING,
             training_type=TrainingType.LEAD,
-            content="6a, 6b - my routes",
+            content=[row_routes],
             comments="-",
         )
         assert w == Workout(
@@ -103,7 +103,7 @@ class TestParser:
             content=[
                 ClimbTrain(
                     type=TrainingType.LEAD,
-                    rows=[Row([Route("6a"), Route("6b")], "my routes")],
+                    rows=[row_routes],
                     comments="",
                 )
             ],
@@ -113,7 +113,7 @@ class TestParser:
             workout_date=new_date,
             training_category=TrainingCategory.GYM,
             training_type=TrainingType.GPP,
-            content="the best ex - 99",
+            content=[row_exercises],
             comments="-",
         )
         assert w == Workout(
@@ -121,7 +121,7 @@ class TestParser:
             content=[
                 GymTrain(
                     type=TrainingType.GPP,
-                    rows=[Row([Exercise("the best ex", (99,))])],
+                    rows=[row_exercises],
                     comments="",
                 )
             ],
