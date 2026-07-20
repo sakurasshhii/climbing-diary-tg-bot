@@ -44,7 +44,6 @@ from app.bot.keyboards.journal_keyboards import (add_workout_confirm_kb,
 from app.bot.states.add_workout import (FSMFillWorkout, FSMWorkoutData,
                                         FSMWorkoutDataComplete)
 from app.domain.enums import TrainingCategory, TrainingType
-from app.domain.models import DBJournal
 from app.lexic.ru import FSM_ADD_TRAIN, FSM_ADD_TRAIN_CAT, GET_JOURNAL
 from app.services.services import JournalService, UserService
 
@@ -145,6 +144,8 @@ async def process_picked_journal(
 ) -> None:
     await cback.answer()
     message = assure_callback_message(cback)
+    
+    await message.delete()
 
     await state_pick_j_set_next(
         int(cback.data), # type: ignore
@@ -253,7 +254,11 @@ async def process_add_train_type(cback: CallbackQuery, state: FSMContext) -> Non
 
 # ———————————————————————————— 5.content ———————————————————————————————
 @workout_router.message(StateFilter(FSMFillWorkout.add_train_content), F.text)
-async def process_add_train_content(message: Message, state: FSMContext) -> None:
+async def process_add_train_content(
+    message: Message,
+    state: FSMContext,
+    journal_service: JournalService,
+) -> None:
     """Step 4. Add training content."""
     message, _ = assure_message_from_user_id(message)
 
@@ -263,22 +268,26 @@ async def process_add_train_content(message: Message, state: FSMContext) -> None
     if training_cat is None:
         raise exc.JournalError(text="TrainingCategory missed in FSM data")
 
-    is_valid = JournalService.training_sets_validation(
+    content = journal_service.parser.parse_rows(
         text=message.text or "",
-        training_cat=training_cat,
+        training_category=training_cat,
     )
-    if not is_valid:
+    if not content:
         await message.answer(FSM_ADD_TRAIN["error_invalid_sets"])
         return
 
-    await state.update_data(content=message.text)
+    await state.update_data(content=journal_service.parser.dumps_rows(content))
     await state.set_state(FSMFillWorkout.add_comment)
 
     await message.answer(FSM_ADD_TRAIN["fsm_add_comment"])
 
 # ———————————————————————————— 6.comment ———————————————————————————————
 @workout_router.message(StateFilter(FSMFillWorkout.add_comment), F.text)
-async def process_add_train_comment(message: Message, state: FSMContext) -> None:
+async def process_add_train_comment(
+    message: Message,
+    state: FSMContext,
+    journal_service: JournalService,
+) -> None:
     """Step 5. Add comment to the train."""
     await state.update_data(comments=message.text)
     await state.set_state(FSMFillWorkout.check)
@@ -287,7 +296,15 @@ async def process_add_train_comment(message: Message, state: FSMContext) -> None
         await state.get_data(),
     )
 
-    workout = MessageParser.prettify_FSM_workout_data(data)
+    sets = journal_service.parser.loads_sets(data['content'], data['training_category'])
+    preview = "\n".join(str(s) for s in sets)
+
+    workout = (
+            f"— {data['workout_date'].strftime("%d.%m.%Y")} ({data['training_type'].translator}) —\n"
+            f"{preview}\n"
+            f"Комментарии: {data['comments'] if data['comments'] != "-" else '(пусто)'}"
+        )
+
     await message.answer(
         text=FSM_ADD_TRAIN["fsm_to_check"].format(workout),
         reply_markup=add_workout_confirm_kb)
@@ -308,7 +325,6 @@ async def process_check_correct(
 
     await message.edit_reply_markup()
 
-    tg_id = cback.from_user.id
     data: FSMWorkoutDataComplete = cast(
         "FSMWorkoutDataComplete",
         await state.get_data(),

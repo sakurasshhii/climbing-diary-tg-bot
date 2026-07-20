@@ -56,6 +56,7 @@ class JournalService:
     ) -> None:
         self.user_repo = user_repo
         self.journal_repo = journal_repo
+        self.parser = JournalParser()
 
     async def add_journal(
             self,
@@ -75,11 +76,12 @@ class JournalService:
         )
 
     async def add_workout(self, data: FSMWorkoutDataComplete ) -> None: # type: ignore
+        content = self.parser.loads_sets(data['content'], data['training_category'])
         workout = JournalParser.parse_workout(
             workout_date=data['workout_date'],
             training_category=data['training_category'],
             training_type=data['training_type'],
-            content=data['content'],
+            content=content,
             comments=data['comments']
         )
         await self.journal_repo.add_workout(
@@ -122,7 +124,3 @@ class JournalService:
 
         user = await self.user_repo.get_user_by_tg(tg_id, raise_err=True)
         await self.journal_repo.delete_journals(user.id, del_list) # type: ignore
-
-    @staticmethod
-    def training_sets_validation(text: str, training_cat: TrainingCategory) -> bool:
-        return bool(JournalParser.parse_rows(text, training_category=training_cat))

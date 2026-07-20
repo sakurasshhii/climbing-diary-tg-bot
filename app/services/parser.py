@@ -1,6 +1,8 @@
 import datetime as dt
+import json
 import logging
 import re
+from dataclasses import asdict
 from typing import Sequence
 
 from app.domain.enums import TrainingCategory, TrainingType
@@ -28,20 +30,47 @@ class JournalParser:
 
     @classmethod
     def parse_workout(cls, workout_date: dt.date, training_category: TrainingCategory,
-            training_type: TrainingType, content: str, comments: str) -> Workout:
+            training_type: TrainingType, content: list[Row], comments: str) -> Workout:
         """Create Workout from FSM data"""
-        rows = list(cls.parse_rows(content, training_category=training_category))
 
         match training_category:
             case TrainingCategory.CLIMBING:
                 train = ClimbTrain(
-                    type=training_type, rows=rows, comments=comments)
+                    type=training_type, rows=content, comments=comments)
             case TrainingCategory.GYM:
                 train = GymTrain(
-                    type=training_type, rows=rows, comments=comments)
+                    type=training_type, rows=content, comments=comments)
 
         return Workout(
             date=workout_date, content=[train])
+
+    @classmethod
+    def dumps_rows(cls, rows: Sequence[Row]) -> str:
+        data = []
+        if not rows:
+            return ""
+
+        for r in rows:
+            d = asdict(r)
+            del d["training_category"]
+            data.append(d)
+
+        return json.dumps(data, ensure_ascii=True)
+
+    @classmethod
+    def loads_sets(cls, raw: str, training_category: TrainingCategory) -> list[Row]:
+        data = json.loads(raw)
+        return list(cls._loads_row(x, training_category) for x in data)
+
+    @classmethod
+    def _loads_row(cls, row: dict, training_category: TrainingCategory) -> Row:
+        content = row.get("content", [])
+        if training_category == TrainingCategory.CLIMBING:
+            row["content"] = tuple(Route(**r) for r in content)
+        elif training_category == TrainingCategory.GYM:
+            row["content"] = tuple(Exercise(**e) for e in content)
+
+        return Row(**row)
 
     @classmethod
     def get_route(cls, raw_route: str) -> Route:

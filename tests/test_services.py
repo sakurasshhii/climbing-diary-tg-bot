@@ -160,14 +160,14 @@ class TestJournalService:
         assert result.comments == "my comment"
 
     def test_training_validation_true(self):
-        result = JournalService.training_sets_validation(
+        result = JournalService.training_sets(
             "6a",
             TrainingCategory.CLIMBING,
         )
         assert result is True
 
     def test_training_validation_false(self):
-        result = JournalService.training_sets_validation(
+        result = JournalService.training_sets(
             " ",
             TrainingCategory.GYM,
         )
