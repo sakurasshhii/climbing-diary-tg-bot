@@ -70,6 +70,10 @@ class JournalService:
             comments=comments,
         )
 
+    async def update_last_journal(self, tg_id: int, journal_id: int) -> None:
+        user = await self.user_repo.get_user_by_tg(tg_id, raise_err=True)
+        await self.journal_repo.update_last_journal(user.id, journal_id)  # type: ignore
+
     async def check_workout_in_journal(self, workout_date, journal_id) -> bool:
         """Check if workout with the same date already exists in chosen journal."""
         return await self.journal_repo.check_workout_in_journal(

@@ -3,7 +3,6 @@
 """
 
 #—————————————————————— table creation ———————————————————
-
 SCRIPT_CREATE_TABLES = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -115,7 +114,6 @@ ON exercises(row_id);
 
 #—————————————————————— user repo operations —————————————
 #—————————————————————— insert data ——————————————————————
-
 INSERT_USER = """
 INSERT OR IGNORE INTO users (tg_id, username)
 VALUES (?, ?);
@@ -150,8 +148,8 @@ INSERT_EXERCISE = """
 INSERT INTO exercises (row_id, exercise_order, name, repeats)
 VALUES (?, ?, ?, ?);
 """
-#—————————————————————————— get data ——————————————————————————
 
+#—————————————————————————— get data ——————————————————————————
 GET_USER_BY_TG_ID = """
 SELECT *
 FROM users
@@ -296,7 +294,6 @@ LIMIT 1;
 """
 
 #—————————————————————————— update data ——————————————————————————
-
 UPDATE_JOURNAL_PERIOD = """
 UPDATE journals
 SET
@@ -305,7 +302,7 @@ SET
 WHERE id = ?;
 """
 
-UPDATE_LAST_JOURNAL = """
+UPDATE_LAST_JOURNAL_AUTO = """
 UPDATE users
 SET last_journal = (
     SELECT id
@@ -316,8 +313,14 @@ SET last_journal = (
 )
 WHERE id = ?;
 """
-#—————————————————————————— delete data ——————————————————————————
 
+UPDATE_LAST_JOURNAL = """
+UPDATE users
+SET last_journal = ?
+WHERE id = ?;
+"""
+
+#—————————————————————————— delete data ——————————————————————————
 DELETE_JOURNALS = """
 DELETE FROM journals
 WHERE user_id = ?

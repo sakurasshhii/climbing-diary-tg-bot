@@ -58,6 +58,7 @@ async def state_add_date_set_next(
             text="ТРЕНИРОВКА В ЭТОТ ДЕНЬ УЖЕ ЗАПИСАНА",
             reply_markup=ReplyKeyboardRemove(),
         )
+        await state.clear()
         return
 
     await state.update_data(workout_date=date)

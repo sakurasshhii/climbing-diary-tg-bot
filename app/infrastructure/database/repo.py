@@ -71,6 +71,12 @@ class JournalRepository:
             (user_id, name, comments, *period),
         )
 
+    async def update_last_journal(self, user_id: int, journal_id: int) -> None:
+        await self.db.execute(
+            UPDATE_LAST_JOURNAL,
+            (journal_id, user_id)
+        )
+
     async def check_workout_in_journal(self, workout_date: dt.date, journal_id: int) -> bool:
         """Check if workout with the same date already exists in chosen journal."""
         return await self.db.fetchone(
@@ -267,7 +273,7 @@ class JournalRepository:
                 tuple([user_id] + list(del_list)),
             )
             await db.execute(
-                UPDATE_LAST_JOURNAL,
+                UPDATE_LAST_JOURNAL_AUTO,
                 (user_id, user_id),
             )
 
