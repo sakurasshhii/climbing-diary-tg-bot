@@ -8,7 +8,7 @@ class JournalNotFoundError(Exception):
         self.journal_id = journal_id
 
     def __str__(self) -> str:
-        return "Journal not found: " + self.journal_id
+        return "Journal not found: " + str(self.journal_id)
 
 
 class WorkoutError(Exception):

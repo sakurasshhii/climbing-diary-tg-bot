@@ -4,11 +4,10 @@ from unittest.mock import patch
 import pytest
 
 from app.domain.enums import TrainingCategory, TrainingType
-from app.domain.exceptions import UserNotFoundError
-from app.domain.models import DBJournal, Journal, User
-from app.services.services import JournalService
+from app.domain.models import Journal
 from app.services.parser import JournalParser
 from app.bot.states.add_workout import FSMWorkoutDataComplete
+from app.infrastructure.database.exceptions import JournalNotFoundError
 
 
 class TestUserService:
@@ -120,7 +119,7 @@ class TestJournalService:
     async def test_get_complete_journal_not_found(self, journal_repo, journal_service):
         journal_repo.get_complete_journal.return_value = None
 
-        with pytest.raises(ValueError, match="Journal not found"):
+        with pytest.raises(JournalNotFoundError, match="Journal not found"):
             await journal_service.get_complete_journal(1)
 
     @pytest.mark.asyncio
