@@ -4,10 +4,16 @@ from app.bot.handlers import exceptions as exc
 
 
 def assure_message_from_user_id(message: Message) -> tuple[Message, int]:
-    """Check if message has user info."""
+    """Check if message has user info.
+    
+    Returns:
+        message (Message): assured message;
+        user id (int): user.id if exists.
+    """
+
     if not message.from_user or not message.from_user.id:
         raise exc.NoInfoFromUserError(__name__)
-    
+
     return message, message.from_user.id
 
 def assure_callback_message(cback: CallbackQuery) -> Message:

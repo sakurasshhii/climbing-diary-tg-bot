@@ -8,7 +8,7 @@ from app.bot.keyboards.journal_keyboards import select_date_kb, train_cat_kb
 from app.bot.states.add_workout import FSMFillWorkout
 from app.bot.states.edit_journal import FSMAddJournal
 from app.lexic.ru import ADD_JOURNAL, FSM_ADD_TRAIN
-from app.services.services import JournalService, UserService
+from app.services.services import JournalService
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,13 @@ async def state_add_date_set_next(
     date: dt.date,
     state: FSMContext,
     message: Message,
+    journal_service: JournalService,
 ) -> None:
+    data = await state.get_data()
+    flag = await journal_service.check_workout_in_journal(
+        date,
+        data.get("journal_no", 0),
+    )
     await state.update_data(workout_date=date)
     await state.set_state(FSMFillWorkout.add_train_type)
     await message.answer(
@@ -32,7 +38,6 @@ async def state_pick_j_set_next(
     state: FSMContext,
     message: Message,
     journal_service: JournalService,
-    user_service: UserService,
 ) -> None:
 
     await state.update_data(journal_no=journal_id)

@@ -258,8 +258,7 @@ ORDER BY
 """
 
 GET_J_ROUTES = """
-SELECT
-    rt.*
+SELECT rt.*
 FROM routes rt
 JOIN rows r
     ON r.id = rt.row_id
@@ -274,8 +273,7 @@ ORDER BY
 """
 
 GET_J_EXERCISES = """
-SELECT
-    ex.*
+SELECT ex.*
 FROM exercises ex
 JOIN rows r
     ON r.id = ex.row_id
@@ -288,6 +286,15 @@ ORDER BY
     ex.row_id,
     ex.exercise_order;
 """
+#—————————————————————————— check data ———————————————————————————
+CHECK_WORKOUT = """
+SELECT 1
+FROM workouts
+WHERE workout_date = ?
+  AND journal_id = ?
+LIMIT 1;
+"""
+
 #—————————————————————————— update data ——————————————————————————
 
 UPDATE_JOURNAL_PERIOD = """

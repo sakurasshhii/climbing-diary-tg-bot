@@ -6,12 +6,12 @@ import logging
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 
-from app.domain.exceptions import UserNotFoundError
 from app.domain.models import (ClimbTrain, DBJournal, DBRow, DBTrain,
                                DBWorkout, Exercise, GymTrain, Journal, Route,
                                Row, Train, User, Workout)
 
 from .database import Database, Transaction
+from .exceptions import UserNotFoundError
 from .sql_models import *
 
 logger = logging.getLogger(__name__)
@@ -70,6 +70,13 @@ class JournalRepository:
             INSERT_JOURNAL,
             (user_id, name, comments, *period),
         )
+
+    async def check_workout_in_journal(self, workout_date: dt.date, journal_id: int) -> bool:
+        """Check if workout with the same date already exists in chosen journal."""
+        return await self.db.fetchone(
+            CHECK_WORKOUT,
+            (workout_date, journal_id),
+        ) is not None
 
     async def add_workout(
             self,

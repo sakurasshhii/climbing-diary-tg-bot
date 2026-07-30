@@ -89,7 +89,6 @@ async def process_add_workout_command(
             state,
             message,
             journal_service,
-            user_service,
         )
 
     else:
@@ -129,7 +128,6 @@ async def process_pick_journal(
             state,
             message,
             journal_service,
-            user_service,
         )
 
 @workout_router.callback_query(
@@ -152,7 +150,6 @@ async def process_picked_journal(
         state,
         message,
         journal_service,
-        user_service
     )
 
 # ———————————————————————————— 2.date ———————————————————————————————
@@ -160,7 +157,11 @@ async def process_picked_journal(
     StateFilter(FSMFillWorkout.add_date),
     F.data.in_(["today", "yesterday"]),
 )
-async def process_add_date_press(cback: CallbackQuery, state: FSMContext) -> None:
+async def process_add_date_press(
+    cback: CallbackQuery,
+    state: FSMContext,
+    journal_service: JournalService,
+    ) -> None:
     await cback.answer()
     message = assure_callback_message(cback)
 
@@ -170,7 +171,12 @@ async def process_add_date_press(cback: CallbackQuery, state: FSMContext) -> Non
     if cback.data == "yesterday":
         date -= dt.timedelta(days=1)
 
-    await state_add_date_set_next(state=state, date=date, message=message)
+    await state_add_date_set_next(
+        state=state,
+        date=date,
+        message=message,
+        journal_service=journal_service,
+    )
 
     state_data = await state.get_data()
     logger.info("STATE DATA [process_add_date_press]: %s", state_data)
@@ -196,10 +202,16 @@ async def process_add_date_press_other(cback: CallbackQuery) -> None:
 async def process_add_date_other(
     message: Message,
     state: FSMContext,
-    date: dt.date
+    date: dt.date,
+    journal_service: JournalService,
 ) -> None:
     message, _ = assure_message_from_user_id(message)
-    await state_add_date_set_next(state=state, date=date, message=message)
+    await state_add_date_set_next(
+        state=state,
+        date=date,
+        message=message,
+        journal_service=journal_service,
+    )
 
 @workout_router.message(
         StateFilter(FSMFillWorkout.add_date),

@@ -5,10 +5,7 @@ class InvalidInputError(Exception):
     
     def __str__(self) -> str:
         return f"Can't create cls object from: {self.val}; {self.txt}"
-
-class UserNotFoundError(Exception):
-    def __init__(self, user_id) -> None:
-        self.user_id = user_id
+    
 
 class MissedDateError(Exception):
     def __init__(self, val) -> None:

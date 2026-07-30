@@ -1,11 +1,9 @@
 import logging
 from collections.abc import Iterable, Sequence
 
-from app.domain.enums import TrainingCategory, TrainingType
-from app.domain.exceptions import UserNotFoundError
-from app.domain.models import (ClimbTrain, DBJournal, DBTrain, DBWorkout,
-                               GymTrain, Journal, Row, User, Workout)
+from app.domain.models import (DBJournal, Journal, User)
 from app.infrastructure.database.repo import JournalRepository, UserRepository
+from app.infrastructure.database.exceptions import UserNotFoundError, JournalNotFoundError, WorkoutError
 
 from .parser import JournalParser
 
@@ -18,10 +16,6 @@ class UserService:
     
     async def add_user(self, tg_id: int, username: str | None) -> None:
         await self.user_repo.add_user(tg_id=tg_id, username=username)
-        # logger.info(
-        #     "AFTER INSERT USER: %s",
-        #     await self.user_repo.get_all_users()
-        # )
 
     async def get_all_users(self) -> Iterable[User]:
         users = await self.user_repo.get_all_users()
@@ -35,17 +29,16 @@ class UserService:
         if user:
             return user
 
-        n = 0
-        while user is None:
-            n += 1
-            if n == 5:
-                logger.warning("DATABASE PROBLEM: can't add user to db :(")
-                raise RuntimeError
-            await self.add_user(
+        await self.add_user(
                 tg_id=tg_id,
                 username=username
             )
-            user = await self.get_user(tg_id)
+
+        user = await self.get_user(tg_id)
+
+        if user is None:
+            logger.warning("DATABASE PROBLEM: can't add user to db :(")
+            raise RuntimeError
 
         return user
 
@@ -59,11 +52,11 @@ class JournalService:
         self.parser = JournalParser()
 
     async def add_journal(
-            self,
-            tg_id: int,
-            name: str = "",
-            comments: str = "",
-        ) -> None:
+        self,
+        tg_id: int,
+        name: str = "",
+        comments: str = "",
+    ) -> None:
         user = await self.user_repo.get_user_by_tg(tg_id, raise_err=True)
 
         if comments in ("-", "—"):
@@ -75,7 +68,22 @@ class JournalService:
             comments=comments,
         )
 
-    async def add_workout(self, data: FSMWorkoutDataComplete ) -> None: # type: ignore
+    async def check_workout_in_journal(self, workout_date, journal_id) -> bool:
+        """Check if workout with the same date already exists in chosen journal."""
+        return await self.journal_repo.check_workout_in_journal(
+                workout_date,
+                journal_id
+            )
+
+    async def add_workout(self, data: FSMWorkoutDataComplete, allow_duplicate=True) -> None: # type: ignore
+        """Добавляет данные о тренировке в указанный журнал."""
+        if allow_duplicate is False:
+            if await self.check_workout_in_journal(
+                data["workout_date"],
+                data["journal_no"],
+            ):
+                raise WorkoutError(f"Workout with that date already exists: {data['workout_date']}")
+
         content = self.parser.loads_sets(data['content'], data['training_category'])
         workout = JournalParser.parse_workout(
             workout_date=data['workout_date'],
@@ -107,14 +115,14 @@ class JournalService:
         journal = await self.journal_repo.get_journal(journal_id)
         if journal is None:
             logger.exception("Journal not found: %s", journal_id)
-            raise ValueError("Journal not found")
+            raise JournalNotFoundError(journal_id)
         return journal
 
     async def get_complete_journal(self, journal_id: int) -> Journal | None:
         """Возвращает Journal пользователя."""
         journal = await self.journal_repo.get_complete_journal(journal_id)
         if journal is None:
-            raise ValueError("Journal not found")
+            raise JournalNotFoundError(journal_id)
 
         return journal
 
