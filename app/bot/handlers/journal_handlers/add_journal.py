@@ -96,7 +96,6 @@ async def process_j_comments(
             state=state,
             message=message,
             journal_service=journal_service,
-            user_service=user_service,
         )
 
     else:
