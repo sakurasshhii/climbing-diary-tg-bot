@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 
 from app.bot.keyboards.journal_keyboards import select_date_kb, train_cat_kb
 from app.bot.states.add_workout import FSMFillWorkout
@@ -25,6 +25,13 @@ async def state_add_date_set_next(
         date,
         data.get("journal_no", 0),
     )
+    if flag:
+        await message.answer(
+            text="ТРЕНИРОВКА В ЭТОТ ДЕНЬ УЖЕ ЗАПИСАНА",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return
+
     await state.update_data(workout_date=date)
     await state.set_state(FSMFillWorkout.add_train_type)
     await message.answer(

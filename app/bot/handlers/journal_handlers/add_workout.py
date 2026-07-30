@@ -138,7 +138,6 @@ async def process_picked_journal(
     cback: CallbackQuery,
     state: FSMContext,
     journal_service: JournalService,
-    user_service: UserService,
 ) -> None:
     await cback.answer()
     message = assure_callback_message(cback)
@@ -308,14 +307,7 @@ async def process_add_train_comment(
         await state.get_data(),
     )
 
-    sets = journal_service.parser.loads_sets(data['content'], data['training_category'])
-    preview = "\n".join(str(s) for s in sets)
-
-    workout = (
-            f"— {data['workout_date'].strftime("%d.%m.%Y")} ({data['training_type'].translator}) —\n"
-            f"{preview}\n"
-            f"Комментарии: {data['comments'] if data['comments'] != "-" else '(пусто)'}"
-        )
+    workout = MessageParser.prettify_FSM_workout_data(data, journal_service)
 
     await message.answer(
         text=FSM_ADD_TRAIN["fsm_to_check"].format(workout),
@@ -347,7 +339,8 @@ async def process_check_correct(
     await journal_service.add_workout(data)
     await message.answer(
         text=FSM_ADD_TRAIN["fsm_complete"],
-        reply_markup=ReplyKeyboardRemove())
+        reply_markup=ReplyKeyboardRemove(),
+    )
     await state.clear()
 
     logger.info(f"Собранная информация state.get_data(): {data}")
