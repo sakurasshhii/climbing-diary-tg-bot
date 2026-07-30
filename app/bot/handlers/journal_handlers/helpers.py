@@ -48,7 +48,7 @@ async def state_add_date_set_next(
     Get workout date from user -> process -> set next state (train_type).
     """
     data = await state.get_data()
-    journal_id = data.get("journal_id")
+    journal_id = data.get("journal_no")
     if journal_id is None:
         raise RuntimeError("journal_id not found in FSM")
 
