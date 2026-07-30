@@ -1,9 +1,11 @@
 import logging
 from collections.abc import Iterable, Sequence
 
-from app.domain.models import (DBJournal, Journal, User)
+from app.domain.models import DBJournal, Journal, User
+from app.infrastructure.database.exceptions import (JournalNotFoundError,
+                                                    UserNotFoundError,
+                                                    WorkoutError)
 from app.infrastructure.database.repo import JournalRepository, UserRepository
-from app.infrastructure.database.exceptions import UserNotFoundError, JournalNotFoundError, WorkoutError
 
 from .parser import JournalParser
 
