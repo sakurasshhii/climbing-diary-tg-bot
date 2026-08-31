@@ -97,4 +97,4 @@ climbing-diary-tg-bot/
 
 Email: sakuraiiarina@gmail.com
 Telegram: @sakurasshhii
-Github: @sakurasshhii# ClimbMetrics — спортивный дневник в telegram
+Github: @sakurasshhii
