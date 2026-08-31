@@ -1,7 +1,15 @@
+# pytest
+htmlcov/
+
+# profiling
+*.prof
+*.out
+
 # Aiosqlite files
 *.db
 *.db-shm
 *.db-wal
+journal_data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

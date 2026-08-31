@@ -1,15 +1,16 @@
-import aiosqlite
 import logging
 
+import aiosqlite
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from app.bot.handlers import routers
-from app.bot.middlewares import DBUserMiddleware
-from app.config.config import Config
-from app.infrastructure.database import Database, CREATE_USERS_TABLE
 from app.bot.keyboards.set_menu import set_main_menu
+from app.bot.middlewares import ServicesMiddleware
+from app.config.config import Config
+from app.infrastructure.database import Database, create_tables
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,8 @@ async def main(config: Config) -> None:
         session=session,
         default=DefaultBotProperties()
     )
-    dp = Dispatcher()
+    storage = MemoryStorage()
+    dp = Dispatcher(storage=storage)
 
     await set_main_menu(bot)
 
@@ -36,13 +38,13 @@ async def main(config: Config) -> None:
     db = await aiosqlite.connect(config.db.path)
     db.row_factory = aiosqlite.Row
     my_db = Database(db)
-    await my_db.conn.execute(CREATE_USERS_TABLE)
+    await create_tables(db=my_db)
 
     logger.info('Include routers...')
     dp.include_routers(*routers)
 
     logger.info('Including middlewares...')
-    dp.update.middleware(DBUserMiddleware(my_db))
+    dp.update.middleware(ServicesMiddleware(my_db))
 
     logger.info('Start polling...')
     await bot.delete_webhook(drop_pending_updates=True)
